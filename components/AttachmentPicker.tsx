@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
-import { api } from '@/lib/api'
+import { uploadFile } from '@/lib/api/uploads'
 import type { UploadResult } from '@/lib/types'
 
 const ACCEPT = '.pdf,.zip,.jpg,.jpeg,.png,.gif,.webp'
@@ -21,9 +21,7 @@ export default function AttachmentPicker({
     setError('')
     setUploading(true)
     try {
-      const uploaded = await Promise.all(
-        Array.from(files).map((f) => api.upload<UploadResult>('/api/uploads', f))
-      )
+      const uploaded = await Promise.all(Array.from(files).map((f) => uploadFile(f)))
       onChange([...value, ...uploaded])
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.')

@@ -2,7 +2,8 @@
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { createComment, deleteComment as apiDeleteComment, deletePost, getPost, listComments } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import PostContent from '@/components/PostContent'
 import type { Comment, Post, User } from '@/lib/types'
 
@@ -22,8 +23,8 @@ export default function NoticeDetailPage() {
     setComments([])
     setNotFound(false)
     Promise.all([
-      api.get<Post>(`/api/posts/${id}`),
-      api.get<Comment[]>(`/api/posts/${id}/comments`),
+      getPost(id),
+      listComments(id),
     ])
       .then(([p, c]) => {
         setNotice(p)
@@ -35,20 +36,20 @@ export default function NoticeDetailPage() {
 
   async function handleDelete() {
     if (!confirm('공지사항을 삭제하시겠습니까?')) return
-    await api.del(`/api/posts/${id}`)
+    await deletePost(id)
     router.push('/notices')
   }
 
   async function submitComment(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    const c = await api.post<Comment>(`/api/posts/${id}/comments`, { content: text })
+    const c = await createComment(id, text)
     setComments((prev) => [...prev, c])
     setText('')
   }
 
   async function deleteComment(cid: number) {
-    await api.del(`/api/comments/${cid}`)
+    await apiDeleteComment(cid)
     setComments((prev) => prev.filter((c) => c.id !== cid))
   }
 

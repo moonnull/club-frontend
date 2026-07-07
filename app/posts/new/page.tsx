@@ -1,10 +1,12 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { listBoards } from '@/lib/api/boards'
+import { createPost } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import ImageInsertButton from '@/components/ImageInsertButton'
-import type { BoardCategory, Post, UploadResult, User } from '@/lib/types'
+import type { BoardCategory, UploadResult, User } from '@/lib/types'
 
 export default function NewPostPage() {
   const router = useRouter()
@@ -19,7 +21,7 @@ export default function NewPostPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    api.get<BoardCategory[]>('/api/boards').then((all) => {
+    listBoards().then((all) => {
       const writable = all.filter((b) => b.key !== 'NOTICE' && (!b.admin_only || user?.role === 'ADMIN'))
       setBoards(writable)
       setBoardType((prev) => prev || writable[0]?.key || '')
@@ -43,7 +45,7 @@ export default function NewPostPage() {
     setError('')
     setLoading(true)
     try {
-      const post = await api.post<Post>('/api/posts', {
+      const post = await createPost({
         title,
         content,
         board_type: boardType,

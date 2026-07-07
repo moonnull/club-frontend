@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { clearAuth, getStoredUser } from '@/lib/api'
+import { clearAuth, getStoredUser } from '@/lib/session'
 import type { User } from '@/lib/types'
 import ThemeToggle from './ThemeToggle'
 

@@ -1,8 +1,9 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
-import type { Project, User } from '@/lib/types'
+import { createProject } from '@/lib/api/projects'
+import { getStoredUser } from '@/lib/session'
+import type { User } from '@/lib/types'
 
 export default function NewProjectPage() {
   const router = useRouter()
@@ -26,7 +27,7 @@ export default function NewProjectPage() {
     setError('')
     setLoading(true)
     try {
-      await api.post<Project>('/api/projects', {
+      await createProject({
         title: form.title,
         description: form.description || null,
         generation: form.generation ? Number(form.generation) : null,

@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { api, getStoredUser } from '@/lib/api'
+import { listBoards } from '@/lib/api/boards'
+import { listPosts } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import type { BoardCategory, Post, User } from '@/lib/types'
 
 const BOARD_COLORS = [
@@ -35,7 +37,7 @@ export default function PostsPage() {
   const boardMap = Object.fromEntries(boards.map((b) => [b.key, b.name]))
 
   useEffect(() => {
-    api.get<BoardCategory[]>('/api/boards').then((all) => setBoards(all.filter((b) => b.key !== 'NOTICE')))
+    listBoards().then((all) => setBoards(all.filter((b) => b.key !== 'NOTICE')))
   }, [])
 
   useEffect(() => {
@@ -45,11 +47,7 @@ export default function PostsPage() {
 
   useEffect(() => {
     setLoading(true)
-    const p = new URLSearchParams()
-    if (boardType) p.set('board_type', boardType)
-    if (debouncedSearch) p.set('search', debouncedSearch)
-    api
-      .get<Post[]>(`/api/posts?${p}`)
+    listPosts({ board_type: boardType || undefined, search: debouncedSearch || undefined })
       .then((all) => setPosts(all.filter((post) => post.board_type !== 'NOTICE')))
       .finally(() => setLoading(false))
   }, [boardType, debouncedSearch])

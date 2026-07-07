@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { api, getStoredUser } from '@/lib/api'
-import type { AssignmentListItem, User } from '@/lib/types'
+import { listAssignments } from '@/lib/api/assignments'
+import { getStoredUser } from '@/lib/session'
+import type { User } from '@/lib/types'
 
 export default function AssignmentsIndexPage() {
   const router = useRouter()
@@ -11,7 +12,7 @@ export default function AssignmentsIndexPage() {
   const [hasAssignments, setHasAssignments] = useState(false)
 
   useEffect(() => {
-    api.get<AssignmentListItem[]>('/api/assignments').then((list) => {
+    listAssignments().then((list) => {
       if (list.length > 0) {
         router.replace(`/assignments/${list[0].id}`)
       } else {

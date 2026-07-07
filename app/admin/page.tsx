@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { api, getStoredUser } from '@/lib/api'
+import { approveUser, deleteUser, listUsers, updateUserRole } from '@/lib/api/admin'
+import { createBoard, deleteBoard, listBoards, updateBoard } from '@/lib/api/boards'
+import { getStoredUser } from '@/lib/session'
 import type { BoardCategory, User } from '@/lib/types'
 
 export default function AdminPage() {
@@ -26,20 +28,19 @@ export default function AdminPage() {
 
   function load() {
     setLoading(true)
-    api
-      .get<User[]>('/api/admin/users')
+    listUsers()
       .then(setUsers)
       .catch((err) => setError(err instanceof Error ? err.message : '오류가 발생했습니다.'))
       .finally(() => setLoading(false))
   }
 
   function loadBoards() {
-    api.get<BoardCategory[]>('/api/boards').then(setBoards)
+    listBoards().then(setBoards)
   }
 
   async function approve(userId: number) {
     try {
-      await api.post(`/api/admin/users/${userId}/approve`, {})
+      await approveUser(userId)
       load()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -50,7 +51,7 @@ export default function AdminPage() {
     const nextRole = user.role === 'ADMIN' ? 'MEMBER' : 'ADMIN'
     if (!confirm(`${user.name} 님을 ${nextRole === 'ADMIN' ? '관리자로' : '일반 회원으로'} 변경할까요?`)) return
     try {
-      await api.put(`/api/admin/users/${user.id}/role`, { role: nextRole })
+      await updateUserRole(user.id, nextRole)
       load()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -60,7 +61,7 @@ export default function AdminPage() {
   async function remove(user: User) {
     if (!confirm(`${user.name} 님을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return
     try {
-      await api.del(`/api/admin/users/${user.id}`)
+      await deleteUser(user.id)
       load()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -71,7 +72,7 @@ export default function AdminPage() {
     e.preventDefault()
     setBoardError('')
     try {
-      await api.post('/api/boards', newBoard)
+      await createBoard(newBoard)
       setNewBoard({ key: '', name: '', admin_only: false })
       loadBoards()
     } catch (err: unknown) {
@@ -83,7 +84,7 @@ export default function AdminPage() {
     const name = prompt('새 게시판 이름을 입력하세요.', board.name)
     if (!name || name === board.name) return
     try {
-      await api.put(`/api/boards/${board.id}`, { name })
+      await updateBoard(board.id, { name })
       loadBoards()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -92,7 +93,7 @@ export default function AdminPage() {
 
   async function toggleAdminOnly(board: BoardCategory) {
     try {
-      await api.put(`/api/boards/${board.id}`, { admin_only: !board.admin_only })
+      await updateBoard(board.id, { admin_only: !board.admin_only })
       loadBoards()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -102,7 +103,7 @@ export default function AdminPage() {
   async function removeBoard(board: BoardCategory) {
     if (!confirm(`'${board.name}' 게시판을 삭제할까요?`)) return
     try {
-      await api.del(`/api/boards/${board.id}`)
+      await deleteBoard(board.id)
       loadBoards()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')

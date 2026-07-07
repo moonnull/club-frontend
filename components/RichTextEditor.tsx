@@ -5,8 +5,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useEffect, useRef } from 'react'
-import { api } from '@/lib/api'
-import type { UploadResult } from '@/lib/types'
+import { uploadFile } from '@/lib/api/uploads'
 import { SlashCommand } from './slashCommandExtension'
 import styles from './RichTextEditor.module.css'
 
@@ -59,7 +58,7 @@ export default function RichTextEditor({
     const insert = insertImageRef.current
     if (!file || !insert) return
     try {
-      const result = await api.upload<UploadResult>('/api/uploads', file)
+      const result = await uploadFile(file)
       insert(result.url)
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.')

@@ -1,7 +1,17 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import {
+  createQuestion,
+  deleteQuestion as apiDeleteQuestion,
+  deleteAssignment,
+  getAssignment,
+  getMySubmission,
+  listQuestions,
+  listSubmissions,
+  submitAssignment,
+} from '@/lib/api/assignments'
+import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import { formatDeadline, isBeforeStart, isPastDeadline } from '@/lib/formatDeadline'
@@ -59,16 +69,16 @@ export default function AssignmentDetailPage() {
     setRightTab('write')
 
     const requests: Promise<unknown>[] = [
-      api.get<Assignment>(`/api/assignments/${id}`).then((a) => {
+      getAssignment(id).then((a) => {
         setAssignment(a)
         setTitle((prev) => prev || (user ? `${a.title}_${user.name} 제출` : ''))
       }),
-      api.get<SubmissionListItem[]>(`/api/assignments/${id}/submissions`).then(setSubmissions),
-      api.get<AssignmentQuestion[]>(`/api/assignments/${id}/questions`).then(setQuestions),
+      listSubmissions(id).then(setSubmissions),
+      listQuestions(id).then(setQuestions),
     ]
     if (user) {
       requests.push(
-        api.get<Submission | null>(`/api/assignments/${id}/submission`).then((sub) => {
+        getMySubmission(id).then((sub) => {
           if (sub) {
             setMySubmission(sub)
             setTitle(sub.title)
@@ -92,7 +102,7 @@ export default function AssignmentDetailPage() {
 
   async function handleDelete() {
     if (!confirm('과제를 삭제하시겠습니까? 제출된 내용도 함께 삭제됩니다.')) return
-    await api.del(`/api/assignments/${id}`)
+    await deleteAssignment(id)
     router.push('/assignments')
   }
 
@@ -100,7 +110,7 @@ export default function AssignmentDetailPage() {
     setSubmitError('')
     setSaving(true)
     try {
-      const result = await api.put<Submission>(`/api/assignments/${id}/submission`, {
+      const result = await submitAssignment(id, {
         title,
         content,
         attachment: file,
@@ -110,7 +120,7 @@ export default function AssignmentDetailPage() {
       if (isFinal) {
         router.push(`/assignments/${id}/submissions/${result.id}`)
       } else {
-        const list = await api.get<SubmissionListItem[]>(`/api/assignments/${id}/submissions`)
+        const list = await listSubmissions(id)
         setSubmissions(list)
         alert('임시 저장되었습니다.')
       }
@@ -125,7 +135,7 @@ export default function AssignmentDetailPage() {
     if (!questionText.trim()) return
     setPostingQuestion(true)
     try {
-      const q = await api.post<AssignmentQuestion>(`/api/assignments/${id}/questions`, { content: questionText })
+      const q = await createQuestion(id, questionText)
       setQuestions((prev) => [...prev, q])
       setQuestionText('')
     } catch (err: unknown) {
@@ -137,7 +147,7 @@ export default function AssignmentDetailPage() {
 
   async function deleteQuestion(qid: number) {
     if (!confirm('질문을 삭제하시겠습니까?')) return
-    await api.del(`/api/assignment-questions/${qid}`)
+    await apiDeleteQuestion(qid)
     setQuestions((prev) => prev.filter((q) => q.id !== qid))
   }
 

@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { api } from '@/lib/api'
+import { signup } from '@/lib/api/auth'
 
 const PARTS = ['개발', '기획', '디자인', '기타']
 
@@ -26,7 +26,7 @@ export default function SignupPage() {
     setError('')
     setLoading(true)
     try {
-      await api.post('/api/auth/signup', {
+      await signup({
         ...form,
         generation: Number(form.generation),
       })

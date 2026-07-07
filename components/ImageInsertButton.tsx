@@ -1,7 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
-import { api } from '@/lib/api'
-import type { UploadResult } from '@/lib/types'
+import { uploadFile } from '@/lib/api/uploads'
 
 export default function ImageInsertButton({
   onUploaded,
@@ -16,7 +15,7 @@ export default function ImageInsertButton({
     if (!file) return
     setUploading(true)
     try {
-      const result = await api.upload<UploadResult>('/api/uploads', file)
+      const result = await uploadFile(file)
       onUploaded(result.url)
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.')

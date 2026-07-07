@@ -2,7 +2,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { listAssignments } from '@/lib/api/assignments'
+import { getStoredUser } from '@/lib/session'
 import { isPastDeadline } from '@/lib/formatDeadline'
 import type { AssignmentListItem, User } from '@/lib/types'
 
@@ -14,8 +15,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api
-      .get<AssignmentListItem[]>('/api/assignments')
+    listAssignments()
       .then(setAssignments)
       .finally(() => setLoading(false))
   }, [pathname])

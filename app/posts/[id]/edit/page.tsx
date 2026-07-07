@@ -1,10 +1,12 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { listBoards } from '@/lib/api/boards'
+import { getPost, updatePost } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import ImageInsertButton from '@/components/ImageInsertButton'
-import type { BoardCategory, Post, UploadResult, User } from '@/lib/types'
+import type { Post, UploadResult, User } from '@/lib/types'
 
 export default function EditPostPage() {
   const { id } = useParams<{ id: string }>()
@@ -21,7 +23,7 @@ export default function EditPostPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    api.get<BoardCategory[]>('/api/boards').then((boards) =>
+    listBoards().then((boards) =>
       setBoardMap(Object.fromEntries(boards.map((b) => [b.key, b.name])))
     )
   }, [])
@@ -32,8 +34,7 @@ export default function EditPostPage() {
     setTitle('')
     setContent('')
     setAttachments([])
-    api
-      .get<Post>(`/api/posts/${id}`)
+    getPost(id)
       .then((p) => {
         setPost(p)
         setTitle(p.title)
@@ -60,7 +61,7 @@ export default function EditPostPage() {
     setError('')
     setSaving(true)
     try {
-      await api.put(`/api/posts/${id}`, { title, content, attachments })
+      await updatePost(id, { title, content, attachments })
       router.push(`/posts/${id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')

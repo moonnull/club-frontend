@@ -2,9 +2,11 @@
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { listBoards } from '@/lib/api/boards'
+import { adoptComment as apiAdoptComment, createComment, deleteComment as apiDeleteComment, deletePost, getPost, listComments, listPosts } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import PostContent from '@/components/PostContent'
-import type { BoardCategory, Comment, Post, User } from '@/lib/types'
+import type { Comment, Post, User } from '@/lib/types'
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -24,14 +26,12 @@ export default function PostDetailPage() {
     setSidebarPosts([])
     try {
       const [p, c] = await Promise.all([
-        api.get<Post>(`/api/posts/${id}`),
-        api.get<Comment[]>(`/api/posts/${id}/comments`),
+        getPost(id),
+        listComments(id),
       ])
       setPost(p)
       setComments(c)
-      const side = await api.get<Post[]>(
-        `/api/posts?board_type=${p.board_type}&limit=30`
-      )
+      const side = await listPosts({ board_type: p.board_type, limit: 30 })
       setSidebarPosts(side)
     } finally {
       setLoading(false)
@@ -40,32 +40,32 @@ export default function PostDetailPage() {
 
   useEffect(() => { load() }, [id])
   useEffect(() => {
-    api.get<BoardCategory[]>('/api/boards').then((boards) =>
+    listBoards().then((boards) =>
       setBoardMap(Object.fromEntries(boards.map((b) => [b.key, b.name])))
     )
   }, [])
 
   async function handleDelete() {
     if (!confirm('게시글을 삭제하시겠습니까?')) return
-    await api.del(`/api/posts/${id}`)
+    await deletePost(id)
     router.push('/posts')
   }
 
   async function submitComment(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    const c = await api.post<Comment>(`/api/posts/${id}/comments`, { content: text })
+    const c = await createComment(id, text)
     setComments((prev) => [...prev, c])
     setText('')
   }
 
   async function deleteComment(cid: number) {
-    await api.del(`/api/comments/${cid}`)
+    await apiDeleteComment(cid)
     setComments((prev) => prev.filter((c) => c.id !== cid))
   }
 
   async function adoptComment(cid: number) {
-    const updated = await api.post<Comment>(`/api/posts/${id}/adopt/${cid}`, {})
+    const updated = await apiAdoptComment(id, cid)
     setComments((prev) =>
       prev.map((c) => (c.id === cid ? updated : { ...c, is_adopted: false }))
     )

@@ -1,10 +1,11 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { createAssignment } from '@/lib/api/assignments'
+import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import type { Assignment, UploadResult, User } from '@/lib/types'
+import type { UploadResult, User } from '@/lib/types'
 
 export default function NewAssignmentPage() {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function NewAssignmentPage() {
     setError('')
     setLoading(true)
     try {
-      const assignment = await api.post<Assignment>('/api/assignments', {
+      const assignment = await createAssignment({
         title,
         content,
         start_at: new Date(startAt).toISOString(),

@@ -1,7 +1,8 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { getPost, updatePost } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import ImageInsertButton from '@/components/ImageInsertButton'
 import type { Post, UploadResult, User } from '@/lib/types'
@@ -25,8 +26,7 @@ export default function EditNoticePage() {
     setTitle('')
     setContent('')
     setAttachments([])
-    api
-      .get<Post>(`/api/posts/${id}`)
+    getPost(id)
       .then((p) => {
         setNotice(p)
         setTitle(p.title)
@@ -53,7 +53,7 @@ export default function EditNoticePage() {
     setError('')
     setSaving(true)
     try {
-      await api.put(`/api/posts/${id}`, { title, content, attachments })
+      await updatePost(id, { title, content, attachments })
       router.push(`/notices/${id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')

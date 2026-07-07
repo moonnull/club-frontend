@@ -1,7 +1,8 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { listProjects } from '@/lib/api/projects'
+import { getStoredUser } from '@/lib/session'
 import type { Project, User } from '@/lib/types'
 
 export default function ProjectsPage() {
@@ -15,10 +16,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     setLoading(true)
-    const p = new URLSearchParams()
-    if (generation) p.set('generation', generation)
-    if (tech) p.set('tech', tech)
-    api.get<Project[]>(`/api/projects?${p}`).then(setProjects).finally(() => setLoading(false))
+    listProjects({ generation, tech }).then(setProjects).finally(() => setLoading(false))
   }, [generation, tech])
 
   const generations = Array.from(

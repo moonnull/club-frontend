@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { api, getStoredUser } from '@/lib/api'
+import { listPosts } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import type { Post, User } from '@/lib/types'
 
 export default function NoticesPage() {
@@ -11,8 +12,7 @@ export default function NoticesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api
-      .get<Post[]>('/api/posts?board_type=NOTICE')
+    listPosts({ board_type: 'NOTICE' })
       .then(setNotices)
       .finally(() => setLoading(false))
   }, [])

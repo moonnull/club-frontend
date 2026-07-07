@@ -2,7 +2,15 @@
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import {
+  createSubmissionComment,
+  deleteSubmissionComment,
+  getAssignment,
+  getSubmission,
+  gradeSubmission,
+  listSubmissionComments,
+} from '@/lib/api/assignments'
+import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import type { Assignment, Grade, Submission, SubmissionComment, UploadResult, User } from '@/lib/types'
@@ -34,9 +42,9 @@ export default function SubmissionDetailPage() {
     setSubmission(null)
     setComments([])
     Promise.all([
-      api.get<Assignment>(`/api/assignments/${id}`),
-      api.get<Submission>(`/api/assignments/${id}/submissions/${submissionId}`),
-      api.get<SubmissionComment[]>(`/api/assignments/${id}/submissions/${submissionId}/comments`),
+      getAssignment(id),
+      getSubmission(id, submissionId),
+      listSubmissionComments(id, submissionId),
     ])
       .then(([a, s, c]) => {
         setAssignment(a)
@@ -50,7 +58,7 @@ export default function SubmissionDetailPage() {
   useEffect(load, [id, submissionId])
 
   async function setGrade(grade: Grade | null) {
-    const result = await api.put<Submission>(`/api/assignments/${id}/submissions/${submissionId}/grade`, { grade })
+    const result = await gradeSubmission(id, submissionId, grade)
     setSubmission(result)
   }
 
@@ -58,10 +66,7 @@ export default function SubmissionDetailPage() {
     if (!commentContent.trim() && !commentFile) return
     setPosting(true)
     try {
-      const comment = await api.post<SubmissionComment>(
-        `/api/assignments/${id}/submissions/${submissionId}/comments`,
-        { content: commentContent, attachment: commentFile }
-      )
+      const comment = await createSubmissionComment(id, submissionId, commentContent, commentFile)
       setComments((prev) => [...prev, comment])
       setCommentContent('')
       setCommentFile(null)
@@ -74,7 +79,7 @@ export default function SubmissionDetailPage() {
 
   async function deleteComment(commentId: number) {
     if (!confirm('댓글을 삭제하시겠습니까?')) return
-    await api.del(`/api/submission-comments/${commentId}`)
+    await deleteSubmissionComment(commentId)
     setComments((prev) => prev.filter((c) => c.id !== commentId))
   }
 

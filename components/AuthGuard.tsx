@@ -1,7 +1,7 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { getStoredUser } from '@/lib/api'
+import { getStoredUser } from '@/lib/session'
 import type { User } from '@/lib/types'
 import Navbar from './Navbar'
 

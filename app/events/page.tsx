@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { checkIn as apiCheckIn, listEvents, myAttendanceStats } from '@/lib/api/events'
+import { getStoredUser } from '@/lib/session'
 import type { AttendanceStats, Event, User } from '@/lib/types'
 
 export default function EventsPage() {
@@ -14,8 +15,8 @@ export default function EventsPage() {
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      api.get<Event[]>(`/api/events?upcoming_only=${upcomingOnly}`),
-      user ? api.get<AttendanceStats>('/api/events/me/attendance-stats') : Promise.resolve(null),
+      listEvents(upcomingOnly),
+      user ? myAttendanceStats() : Promise.resolve(null),
     ])
       .then(([ev, st]) => { setEvents(ev); setStats(st) })
       .finally(() => setLoading(false))
@@ -23,7 +24,7 @@ export default function EventsPage() {
 
   async function checkIn(eventId: number) {
     try {
-      await api.post(`/api/events/${eventId}/attendance`, {})
+      await apiCheckIn(eventId)
       setCheckedIds((p) => [...p, eventId])
       setStats((s) =>
         s ? {

@@ -1,10 +1,11 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { createPost } from '@/lib/api/posts'
+import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import ImageInsertButton from '@/components/ImageInsertButton'
-import type { Post, UploadResult, User } from '@/lib/types'
+import type { UploadResult, User } from '@/lib/types'
 
 export default function NewNoticePage() {
   const router = useRouter()
@@ -33,7 +34,7 @@ export default function NewNoticePage() {
     setError('')
     setLoading(true)
     try {
-      const post = await api.post<Post>('/api/posts', {
+      const post = await createPost({
         title,
         content,
         board_type: 'NOTICE',

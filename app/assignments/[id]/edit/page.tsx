@@ -1,7 +1,8 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, getStoredUser } from '@/lib/api'
+import { getAssignment, updateAssignment } from '@/lib/api/assignments'
+import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import type { Assignment, UploadResult, User } from '@/lib/types'
@@ -35,8 +36,7 @@ export default function EditAssignmentPage() {
     setStartAt('')
     setEndAt('')
     setFiles([])
-    api
-      .get<Assignment>(`/api/assignments/${id}`)
+    getAssignment(id)
       .then((a) => {
         setAssignment(a)
         setTitle(a.title)
@@ -53,7 +53,7 @@ export default function EditAssignmentPage() {
     setError('')
     setSaving(true)
     try {
-      await api.put(`/api/assignments/${id}`, {
+      await updateAssignment(id, {
         title,
         content,
         start_at: new Date(startAt).toISOString(),

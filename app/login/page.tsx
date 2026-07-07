@@ -2,8 +2,8 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
-import { api, saveAuth } from '@/lib/api'
-import type { User } from '@/lib/types'
+import { getMe, login } from '@/lib/api/auth'
+import { saveAuth } from '@/lib/session'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,9 +19,9 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const { access_token } = await api.login(email, pw)
+      const { access_token } = await login(email, pw)
       localStorage.setItem('token', access_token)
-      const me = await api.get<User>('/api/auth/me')
+      const me = await getMe()
       saveAuth(access_token, me)
       router.push('/')
       router.refresh()
