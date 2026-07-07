@@ -1,9 +1,11 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { api, getStoredUser } from '@/lib/api'
 import type { Project, User } from '@/lib/types'
 
 export default function ProjectsPage() {
+  const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [generation, setGeneration] = useState('')
   const [tech, setTech] = useState('')
@@ -28,7 +30,10 @@ export default function ProjectsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">포트폴리오</h1>
         {user && (
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+          <button
+            onClick={() => router.push('/projects/new')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
             프로젝트 등록
           </button>
         )}
