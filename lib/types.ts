@@ -10,17 +10,37 @@ export interface User {
   created_at: string
 }
 
+export interface BoardCategory {
+  id: number
+  key: string
+  name: string
+  admin_only: boolean
+  order: number
+}
+
+export interface UploadResult {
+  url: string
+  filename: string
+  content_type: string
+  size: number
+}
+
+export interface Attachment extends UploadResult {
+  id: number
+}
+
 export interface Post {
   id: number
   title: string
   content: string
-  board_type: 'NOTICE' | 'FREE' | 'QNA' | 'RECRUIT'
+  board_type: string
   view_count: number
   is_closed: boolean
   created_at: string
   updated_at: string
   author: User
   comment_count?: number
+  attachments?: Attachment[]
 }
 
 export interface Comment {

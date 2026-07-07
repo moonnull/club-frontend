@@ -3,17 +3,8 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { api, getStoredUser } from '@/lib/api'
-import type { Comment, Post, User } from '@/lib/types'
-
-const BOARD_LABEL: Record<string, string> = {
-  NOTICE: '공지', FREE: '자유', QNA: 'Q&A', RECRUIT: '모집',
-}
-const BOARD_COLOR: Record<string, string> = {
-  NOTICE: 'text-red-400',
-  FREE: 'text-blue-400',
-  QNA: 'text-green-400',
-  RECRUIT: 'text-purple-400',
-}
+import PostContent from '@/components/PostContent'
+import type { BoardCategory, Comment, Post, User } from '@/lib/types'
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -21,6 +12,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<Post | null>(null)
   const [sidebarPosts, setSidebarPosts] = useState<Post[]>([])
   const [comments, setComments] = useState<Comment[]>([])
+  const [boardMap, setBoardMap] = useState<Record<string, string>>({})
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const user = getStoredUser<User>()
@@ -43,6 +35,11 @@ export default function PostDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+  useEffect(() => {
+    api.get<BoardCategory[]>('/api/boards').then((boards) =>
+      setBoardMap(Object.fromEntries(boards.map((b) => [b.key, b.name])))
+    )
+  }, [])
 
   async function handleDelete() {
     if (!confirm('게시글을 삭제하시겠습니까?')) return
@@ -86,8 +83,9 @@ export default function PostDetailPage() {
     )
   }
 
-  const canDelete = user && (user.id === post.author.id || user.role === 'ADMIN')
+  const canManage = user && (user.id === post.author.id || user.role === 'ADMIN')
   const isAuthor = user?.id === post.author.id
+  const boardLabel = boardMap[post.board_type] ?? post.board_type
 
   return (
     <div className="flex h-[calc(100vh-56px)]">
@@ -101,7 +99,7 @@ export default function PostDetailPage() {
             ← 목록으로
           </Link>
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-            {BOARD_LABEL[post.board_type]} 게시판
+            {boardLabel} 게시판
           </p>
         </div>
 
@@ -139,22 +137,28 @@ export default function PostDetailPage() {
           {/* 제목 영역 */}
           <div className="flex items-start gap-3 justify-between mb-2">
             <div className="flex-1">
-              <span
-                className={`text-xs font-medium ${BOARD_COLOR[post.board_type]}`}
-              >
-                {BOARD_LABEL[post.board_type]}
+              <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400">
+                {boardLabel}
               </span>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white mt-1 leading-snug">
                 {post.title}
               </h1>
             </div>
-            {canDelete && (
-              <button
-                onClick={handleDelete}
-                className="shrink-0 text-xs text-gray-400 hover:text-red-500 transition mt-1"
-              >
-                삭제
-              </button>
+            {canManage && (
+              <div className="flex items-center gap-3 shrink-0 mt-1">
+                <button
+                  onClick={() => router.push(`/posts/${id}/edit`)}
+                  className="text-xs text-gray-400 hover:text-indigo-500 transition"
+                >
+                  수정
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="text-xs text-gray-400 hover:text-red-500 transition"
+                >
+                  삭제
+                </button>
+              </div>
             )}
           </div>
 
@@ -177,10 +181,29 @@ export default function PostDetailPage() {
 
           {/* 본문 */}
           <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {post.content}
-            </p>
+            <PostContent content={post.content} />
           </div>
+
+          {/* 첨부파일 */}
+          {post.attachments && post.attachments.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-800 mt-6 pt-4">
+              <p className="text-xs font-semibold text-gray-400 mb-2">첨부파일</p>
+              <ul className="space-y-1.5">
+                {post.attachments.map((a) => (
+                  <li key={a.id}>
+                    <a
+                      href={a.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      📎 {a.filename}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 

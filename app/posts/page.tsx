@@ -2,34 +2,37 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, getStoredUser } from '@/lib/api'
-import type { Post, User } from '@/lib/types'
+import type { BoardCategory, Post, User } from '@/lib/types'
 
-const BOARDS = [
-  { key: '', label: '전체 게시글', icon: '📋' },
-  { key: 'NOTICE', label: '공지사항', icon: '📢' },
-  { key: 'FREE', label: '자유게시판', icon: '💬' },
-  { key: 'QNA', label: 'Q&A', icon: '❓' },
-  { key: 'RECRUIT', label: '모집', icon: '🤝' },
+const BOARD_COLORS = [
+  { badge: 'bg-blue-500/15 text-blue-400', dot: 'bg-blue-400' },
+  { badge: 'bg-green-500/15 text-green-400', dot: 'bg-green-400' },
+  { badge: 'bg-purple-500/15 text-purple-400', dot: 'bg-purple-400' },
+  { badge: 'bg-amber-500/15 text-amber-400', dot: 'bg-amber-400' },
+  { badge: 'bg-pink-500/15 text-pink-400', dot: 'bg-pink-400' },
+  { badge: 'bg-cyan-500/15 text-cyan-400', dot: 'bg-cyan-400' },
 ]
 
-const BADGE: Record<string, string> = {
-  NOTICE: 'bg-red-500/15 text-red-400',
-  FREE: 'bg-blue-500/15 text-blue-400',
-  QNA: 'bg-green-500/15 text-green-400',
-  RECRUIT: 'bg-purple-500/15 text-purple-400',
-}
-const BOARD_LABEL: Record<string, string> = {
-  NOTICE: '공지', FREE: '자유', QNA: 'Q&A', RECRUIT: '모집',
+function boardColor(key: string) {
+  let hash = 0
+  for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) % BOARD_COLORS.length
+  return BOARD_COLORS[hash]
 }
 
 export default function PostsPage() {
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
+  const [boards, setBoards] = useState<BoardCategory[]>([])
   const [boardType, setBoardType] = useState('')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const user = getStoredUser<User>()
+  const boardMap = Object.fromEntries(boards.map((b) => [b.key, b.name]))
+
+  useEffect(() => {
+    api.get<BoardCategory[]>('/api/boards').then(setBoards)
+  }, [])
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350)
@@ -58,7 +61,18 @@ export default function PostsPage() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {BOARDS.map((b) => (
+          <button
+            onClick={() => setBoardType('')}
+            className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
+              boardType === ''
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <span className="text-base">📋</span>
+            <span>전체 게시글</span>
+          </button>
+          {boards.map((b) => (
             <button
               key={b.key}
               onClick={() => setBoardType(b.key)}
@@ -68,8 +82,8 @@ export default function PostsPage() {
                   : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              <span className="text-base">{b.icon}</span>
-              <span>{b.label}</span>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${boardColor(b.key).dot}`} />
+              <span>{b.name}</span>
             </button>
           ))}
         </nav>
@@ -91,7 +105,7 @@ export default function PostsPage() {
         {/* 헤더 */}
         <div className="px-6 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex items-center gap-3 shrink-0">
           <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
-            {BOARDS.find((b) => b.key === boardType)?.label ?? '전체 게시글'}
+            {boardMap[boardType] ?? '전체 게시글'}
           </h1>
           <div className="flex-1" />
           <input
@@ -139,11 +153,9 @@ export default function PostsPage() {
                   >
                     <td className="px-6 py-3.5">
                       <span
-                        className={`text-xs px-2 py-0.5 rounded font-medium ${
-                          BADGE[p.board_type] ?? ''
-                        }`}
+                        className={`text-xs px-2 py-0.5 rounded font-medium ${boardColor(p.board_type).badge}`}
                       >
-                        {BOARD_LABEL[p.board_type]}
+                        {boardMap[p.board_type] ?? p.board_type}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
