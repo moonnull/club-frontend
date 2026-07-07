@@ -1,162 +1,301 @@
 'use client'
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { api, getStoredUser } from '@/lib/api'
 import type { Comment, Post, User } from '@/lib/types'
 
+const BOARD_LABEL: Record<string, string> = {
+  NOTICE: '공지', FREE: '자유', QNA: 'Q&A', RECRUIT: '모집',
+}
+const BOARD_COLOR: Record<string, string> = {
+  NOTICE: 'text-red-400',
+  FREE: 'text-blue-400',
+  QNA: 'text-green-400',
+  RECRUIT: 'text-purple-400',
+}
+
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [post, setPost] = useState<Post | null>(null)
+  const [sidebarPosts, setSidebarPosts] = useState<Post[]>([])
   const [comments, setComments] = useState<Comment[]>([])
-  const [commentText, setCommentText] = useState('')
+  const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const user = getStoredUser<User>()
 
   async function load() {
-    const [p, c] = await Promise.all([
-      api.get<Post>(`/api/posts/${id}`),
-      api.get<Comment[]>(`/api/posts/${id}/comments`),
-    ])
-    setPost(p)
-    setComments(c)
-    setLoading(false)
+    try {
+      const [p, c] = await Promise.all([
+        api.get<Post>(`/api/posts/${id}`),
+        api.get<Comment[]>(`/api/posts/${id}/comments`),
+      ])
+      setPost(p)
+      setComments(c)
+      const side = await api.get<Post[]>(
+        `/api/posts?board_type=${p.board_type}&limit=30`
+      )
+      setSidebarPosts(side)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [id])
 
-  async function deletePost() {
-    if (!confirm('삭제하시겠습니까?')) return
+  async function handleDelete() {
+    if (!confirm('게시글을 삭제하시겠습니까?')) return
     await api.del(`/api/posts/${id}`)
     router.push('/posts')
   }
 
   async function submitComment(e: React.FormEvent) {
     e.preventDefault()
-    if (!commentText.trim()) return
-    const c = await api.post<Comment>(`/api/posts/${id}/comments`, { content: commentText })
+    if (!text.trim()) return
+    const c = await api.post<Comment>(`/api/posts/${id}/comments`, { content: text })
     setComments((prev) => [...prev, c])
-    setCommentText('')
+    setText('')
   }
 
-  async function deleteComment(commentId: number) {
-    await api.del(`/api/comments/${commentId}`)
-    setComments((prev) => prev.filter((c) => c.id !== commentId))
+  async function deleteComment(cid: number) {
+    await api.del(`/api/comments/${cid}`)
+    setComments((prev) => prev.filter((c) => c.id !== cid))
   }
 
-  async function adoptComment(commentId: number) {
-    const updated = await api.post<Comment>(`/api/posts/${id}/adopt/${commentId}`, {})
-    setComments((prev) => prev.map((c) => (c.id === commentId ? updated : { ...c, is_adopted: false })))
-    setPost((p) => p ? { ...p, is_closed: true } : p)
+  async function adoptComment(cid: number) {
+    const updated = await api.post<Comment>(`/api/posts/${id}/adopt/${cid}`, {})
+    setComments((prev) =>
+      prev.map((c) => (c.id === cid ? updated : { ...c, is_adopted: false }))
+    )
+    setPost((p) => (p ? { ...p, is_closed: true } : p))
   }
 
-  if (loading) return <p className="text-gray-400 text-center py-20">불러오는 중...</p>
-  if (!post) return <p className="text-gray-400 text-center py-20">게시글을 찾을 수 없습니다.</p>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-56px)] text-sm text-gray-400">
+        불러오는 중...
+      </div>
+    )
+  }
+  if (!post) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-56px)] text-sm text-gray-400">
+        게시글을 찾을 수 없습니다.
+      </div>
+    )
+  }
 
-  const canEdit = user && (user.id === post.author.id || user.role === 'ADMIN')
-  const isMyPost = user?.id === post.author.id
+  const canDelete = user && (user.id === post.author.id || user.role === 'ADMIN')
+  const isAuthor = user?.id === post.author.id
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* 게시글 헤더 */}
-      <div className="bg-white rounded-xl border p-6 mb-4">
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <h1 className="text-xl font-bold text-gray-900">{post.title}</h1>
-          {canEdit && (
-            <div className="flex gap-2 shrink-0">
+    <div className="flex h-[calc(100vh-56px)]">
+      {/* ── 왼쪽 사이드바: 같은 게시판 목록 ── */}
+      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+          <Link
+            href="/posts"
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition mb-2"
+          >
+            ← 목록으로
+          </Link>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            {BOARD_LABEL[post.board_type]} 게시판
+          </p>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-1">
+          {sidebarPosts.map((p) => (
+            <Link
+              key={p.id}
+              href={`/posts/${p.id}`}
+              className={`block px-4 py-2.5 border-l-2 transition ${
+                p.id === post.id
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800/40'
+              }`}
+            >
+              <p
+                className={`text-sm truncate leading-snug ${
+                  p.id === post.id
+                    ? 'font-medium text-indigo-700 dark:text-indigo-300'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                {p.title}
+              </p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-0.5">
+                {new Date(p.created_at).toLocaleDateString('ko')}
+              </p>
+            </Link>
+          ))}
+        </nav>
+      </aside>
+
+      {/* ── 가운데: 게시글 본문 ── */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#0d0d0d]">
+        <div className="max-w-2xl mx-auto px-6 py-8">
+          {/* 제목 영역 */}
+          <div className="flex items-start gap-3 justify-between mb-2">
+            <div className="flex-1">
+              <span
+                className={`text-xs font-medium ${BOARD_COLOR[post.board_type]}`}
+              >
+                {BOARD_LABEL[post.board_type]}
+              </span>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white mt-1 leading-snug">
+                {post.title}
+              </h1>
+            </div>
+            {canDelete && (
               <button
-                onClick={deletePost}
-                className="text-sm text-red-400 hover:text-red-600"
+                onClick={handleDelete}
+                className="shrink-0 text-xs text-gray-400 hover:text-red-500 transition mt-1"
               >
                 삭제
               </button>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* 메타 */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-500 mb-6 mt-2">
+            <span className="font-medium text-gray-600 dark:text-gray-300">
+              {post.author.name}
+            </span>
+            <span>·</span>
+            <span>{new Date(post.created_at).toLocaleString('ko')}</span>
+            <span>·</span>
+            <span>조회 {post.view_count}</span>
+            {post.is_closed && (
+              <>
+                <span>·</span>
+                <span className="text-green-500 font-medium">✓ 채택 완료</span>
+              </>
+            )}
+          </div>
+
+          {/* 본문 */}
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+              {post.content}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-3 text-xs text-gray-400 mb-6">
-          <span>{post.author.name}</span>
-          <span>조회 {post.view_count}</span>
-          <span>{new Date(post.created_at).toLocaleString('ko')}</span>
-          {post.is_closed && (
-            <span className="text-green-600 font-medium">✓ 채택 완료</span>
-          )}
-        </div>
-        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{post.content}</p>
       </div>
 
-      {/* 댓글 */}
-      <div className="bg-white rounded-xl border p-6">
-        <h2 className="font-semibold mb-4">댓글 {comments.length}개</h2>
-        {comments.length === 0 && (
-          <p className="text-gray-400 text-sm mb-4">첫 댓글을 남겨보세요.</p>
-        )}
-        <div className="space-y-3 mb-6">
-          {comments.map((c) => (
-            <div
-              key={c.id}
-              className={`rounded-lg p-3 ${c.is_adopted ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}
+      {/* ── 오른쪽 패널: 댓글/제출 ── */}
+      <div className="w-80 shrink-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col overflow-hidden">
+        {/* 탭 헤더 */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-indigo-500 pb-0.5">
+              댓글
+            </span>
+            {post.board_type === 'QNA' && (
+              <span className="text-sm text-gray-400">Q&A</span>
+            )}
+          </div>
+          {user && (
+            <button
+              form="comment-form"
+              type="submit"
+              className="text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium transition"
             >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{c.author.name}</span>
-                  {c.is_adopted && (
-                    <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
-                      채택
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {post.board_type === 'QNA' && isMyPost && !post.is_closed && (
-                    <button
-                      onClick={() => adoptComment(c.id)}
-                      className="text-xs text-green-600 hover:underline"
-                    >
-                      채택
-                    </button>
-                  )}
-                  {user && (user.id === c.author.id || user.role === 'ADMIN') && (
-                    <button
-                      onClick={() => deleteComment(c.id)}
-                      className="text-xs text-red-400 hover:text-red-600"
-                    >
-                      삭제
-                    </button>
-                  )}
-                </div>
-              </div>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.content}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(c.created_at).toLocaleString('ko')}
-              </p>
-            </div>
-          ))}
+              작성
+            </button>
+          )}
         </div>
 
-        {user ? (
-          <form onSubmit={submitComment} className="flex gap-2">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="댓글을 입력하세요..."
-              rows={2}
-              className="flex-1 border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition self-end"
+        {/* 댓글 목록 */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/50">
+          {comments.length === 0 ? (
+            <div className="flex items-center justify-center h-24 text-xs text-gray-400">
+              아직 댓글이 없습니다.
+            </div>
+          ) : (
+            comments.map((c) => (
+              <div
+                key={c.id}
+                className={`px-4 py-3.5 ${
+                  c.is_adopted ? 'bg-green-50 dark:bg-green-500/5' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    {c.is_adopted && (
+                      <span className="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded font-semibold">
+                        채택
+                      </span>
+                    )}
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                      {c.author.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {post.board_type === 'QNA' &&
+                      isAuthor &&
+                      !post.is_closed && (
+                        <button
+                          onClick={() => adoptComment(c.id)}
+                          className="text-xs text-green-600 hover:underline"
+                        >
+                          채택
+                        </button>
+                      )}
+                    {user &&
+                      (user.id === c.author.id ||
+                        user.role === 'ADMIN') && (
+                        <button
+                          onClick={() => deleteComment(c.id)}
+                          className="text-xs text-gray-400 hover:text-red-500 transition"
+                        >
+                          삭제
+                        </button>
+                      )}
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">
+                  {c.content}
+                </p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-1.5">
+                  {new Date(c.created_at).toLocaleString('ko')}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 댓글 입력 */}
+        <div className="border-t border-gray-200 dark:border-gray-800 p-3 shrink-0">
+          {user ? (
+            <form id="comment-form" onSubmit={submitComment}>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="'/'를 입력하여 작성을 시작해보세요."
+                rows={3}
+                className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-indigo-500 transition placeholder-gray-400 dark:placeholder-gray-600"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-gray-400">{text.length}자</span>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition"
+                >
+                  ✏️ 작성
+                </button>
+              </div>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className="block text-center text-sm text-indigo-600 dark:text-indigo-400 hover:underline py-2"
             >
-              등록
-            </button>
-          </form>
-        ) : (
-          <p className="text-sm text-gray-400">
-            댓글을 작성하려면{' '}
-            <a href="/login" className="text-indigo-600 hover:underline">
-              로그인
-            </a>
-            이 필요합니다.
-          </p>
-        )}
+              로그인 후 댓글 작성 가능
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   )

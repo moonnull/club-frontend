@@ -12,10 +12,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
-      <body className={`${inter.className} bg-gray-50 min-h-screen`}>
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        {/* 다크모드 깜빡임 방지 — 렌더 전에 클래스 적용 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme'),d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&d))document.documentElement.classList.add('dark')}catch(e){}})()`,
+          }}
+        />
+      </head>
+      <body className={`${inter.className} bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-gray-100`}>
         <Navbar />
-        <main className="max-w-5xl mx-auto px-4 py-8">{children}</main>
+        {children}
       </body>
     </html>
   )

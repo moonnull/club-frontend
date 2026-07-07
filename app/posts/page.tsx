@@ -1,134 +1,185 @@
 'use client'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { api, getStoredUser } from '@/lib/api'
 import type { Post, User } from '@/lib/types'
 
 const BOARDS = [
-  { key: '', label: '전체' },
-  { key: 'NOTICE', label: '공지' },
-  { key: 'FREE', label: '자유' },
-  { key: 'QNA', label: 'Q&A' },
-  { key: 'RECRUIT', label: '모집' },
+  { key: '', label: '전체 게시글', icon: '📋' },
+  { key: 'NOTICE', label: '공지사항', icon: '📢' },
+  { key: 'FREE', label: '자유게시판', icon: '💬' },
+  { key: 'QNA', label: 'Q&A', icon: '❓' },
+  { key: 'RECRUIT', label: '모집', icon: '🤝' },
 ]
 
-const BOARD_BADGE: Record<string, string> = {
-  NOTICE: 'bg-red-100 text-red-600',
-  FREE: 'bg-blue-100 text-blue-600',
-  QNA: 'bg-green-100 text-green-600',
-  RECRUIT: 'bg-purple-100 text-purple-600',
+const BADGE: Record<string, string> = {
+  NOTICE: 'bg-red-500/15 text-red-400',
+  FREE: 'bg-blue-500/15 text-blue-400',
+  QNA: 'bg-green-500/15 text-green-400',
+  RECRUIT: 'bg-purple-500/15 text-purple-400',
 }
 const BOARD_LABEL: Record<string, string> = {
-  NOTICE: '공지',
-  FREE: '자유',
-  QNA: 'Q&A',
-  RECRUIT: '모집',
+  NOTICE: '공지', FREE: '자유', QNA: 'Q&A', RECRUIT: '모집',
 }
 
 export default function PostsPage() {
+  const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [boardType, setBoardType] = useState('')
   const [search, setSearch] = useState('')
-  const [query, setQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const user = getStoredUser<User>()
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350)
+    return () => clearTimeout(t)
+  }, [search])
+
+  useEffect(() => {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (boardType) params.set('board_type', boardType)
-    if (query) params.set('search', query)
+    const p = new URLSearchParams()
+    if (boardType) p.set('board_type', boardType)
+    if (debouncedSearch) p.set('search', debouncedSearch)
     api
-      .get<Post[]>(`/api/posts?${params}`)
+      .get<Post[]>(`/api/posts?${p}`)
       .then(setPosts)
       .finally(() => setLoading(false))
-  }, [boardType, query])
+  }, [boardType, debouncedSearch])
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">게시판</h1>
-        {user && (
-          <Link
-            href="/posts/new"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-          >
-            글쓰기
-          </Link>
-        )}
-      </div>
-
-      {/* 탭 */}
-      <div className="flex gap-1 mb-4">
-        {BOARDS.map((b) => (
-          <button
-            key={b.key}
-            onClick={() => setBoardType(b.key)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-              boardType === b.key
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white border hover:bg-gray-50'
-            }`}
-          >
-            {b.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 검색 */}
-      <div className="flex gap-2 mb-4">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && setQuery(search)}
-          placeholder="제목 또는 내용 검색..."
-          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
-        <button
-          onClick={() => setQuery(search)}
-          className="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
-        >
-          검색
-        </button>
-      </div>
-
-      {/* 목록 */}
-      {loading ? (
-        <p className="text-gray-400 text-center py-12">불러오는 중...</p>
-      ) : posts.length === 0 ? (
-        <p className="text-gray-400 text-center py-12">게시글이 없습니다.</p>
-      ) : (
-        <div className="bg-white rounded-xl border divide-y">
-          {posts.map((p) => (
-            <Link
-              key={p.id}
-              href={`/posts/${p.id}`}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
-            >
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${BOARD_BADGE[p.board_type]}`}
-              >
-                {BOARD_LABEL[p.board_type]}
-              </span>
-              <span className="flex-1 text-sm font-medium text-gray-800 truncate">
-                {p.title}
-                {p.is_closed && (
-                  <span className="ml-1 text-xs text-gray-400">[채택완료]</span>
-                )}
-              </span>
-              <span className="text-xs text-gray-400 shrink-0">
-                {p.author.name}
-              </span>
-              <span className="text-xs text-gray-300 shrink-0">
-                조회 {p.view_count} · 댓글 {p.comment_count ?? 0}
-              </span>
-              <span className="text-xs text-gray-300 shrink-0">
-                {new Date(p.created_at).toLocaleDateString('ko')}
-              </span>
-            </Link>
-          ))}
+    <div className="flex h-[calc(100vh-56px)]">
+      {/* ── 왼쪽 사이드바 ── */}
+      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            게시판
+          </p>
         </div>
-      )}
+
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {BOARDS.map((b) => (
+            <button
+              key={b.key}
+              onClick={() => setBoardType(b.key)}
+              className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
+                boardType === b.key
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <span className="text-base">{b.icon}</span>
+              <span>{b.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {user && (
+          <div className="p-3 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => router.push('/posts/new')}
+              className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg transition"
+            >
+              + 글쓰기
+            </button>
+          </div>
+        )}
+      </aside>
+
+      {/* ── 메인 컨텐츠 ── */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-[#0d0d0d]">
+        {/* 헤더 */}
+        <div className="px-6 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex items-center gap-3 shrink-0">
+          <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {BOARDS.find((b) => b.key === boardType)?.label ?? '전체 게시글'}
+          </h1>
+          <div className="flex-1" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="검색..."
+            className="bg-gray-100 dark:bg-gray-800 border-0 text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 dark:placeholder-gray-600"
+          />
+        </div>
+
+        {/* 목록 */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-32 text-sm text-gray-400">
+              불러오는 중...
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-sm text-gray-400">
+              게시글이 없습니다.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111]">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-400 w-16">
+                    구분
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">
+                    제목
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 w-20">
+                    작성자
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-medium text-gray-400 w-36">
+                    작성 시각
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                {posts.map((p) => (
+                  <tr
+                    key={p.id}
+                    onClick={() => router.push(`/posts/${p.id}`)}
+                    className="bg-white dark:bg-[#111] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] cursor-pointer transition"
+                  >
+                    <td className="px-6 py-3.5">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded font-medium ${
+                          BADGE[p.board_type] ?? ''
+                        }`}
+                      >
+                        {BOARD_LABEL[p.board_type]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="font-medium text-gray-800 dark:text-gray-100">
+                        {p.title}
+                      </span>
+                      {p.is_closed && (
+                        <span className="ml-2 text-xs text-gray-400">[채택완료]</span>
+                      )}
+                      {(p.comment_count ?? 0) > 0 && (
+                        <span className="ml-2 text-xs text-indigo-500 dark:text-indigo-400">
+                          □{p.comment_count}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
+                      {p.author.name}
+                    </td>
+                    <td className="px-6 py-3.5 text-right text-xs text-gray-400">
+                      {new Date(p.created_at).toLocaleDateString('ko', {
+                        year: '2-digit',
+                        month: '2-digit',
+                        day: '2-digit',
+                      })}{' '}
+                      {new Date(p.created_at).toLocaleTimeString('ko', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
