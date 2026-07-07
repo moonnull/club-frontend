@@ -48,14 +48,14 @@ export default function SignupPage() {
       placeholder={placeholder}
       value={form[k]}
       onChange={(e) => set(k, e.target.value)}
-      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
       required
     />
   )
 
   return (
     <div className="max-w-sm mx-auto mt-12">
-      <h1 className="text-2xl font-bold mb-6">회원가입</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">회원가입</h1>
       <form onSubmit={submit} className="space-y-3">
         {input('name', '이름')}
         {input('student_id', '학번')}
@@ -65,7 +65,7 @@ export default function SignupPage() {
         <select
           value={form.part}
           onChange={(e) => set('part', e.target.value)}
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
         >
           {PARTS.map((p) => (
             <option key={p}>{p}</option>
