@@ -12,7 +12,7 @@ export default function HomePage() {
       <h1 className="text-5xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
         Chimera
       </h1>
-      <p className="text-gray-400 text-lg mb-14">함께 성장하는 개발 동아리</p>
+      <p className="text-gray-400 text-lg mb-14">함께 성장하는 보안 동아리</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
         {cards.map((c) => (
           <Link
