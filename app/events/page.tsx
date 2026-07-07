@@ -1,0 +1,141 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { api, getStoredUser } from '@/lib/api'
+import type { AttendanceStats, Event, User } from '@/lib/types'
+
+export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>([])
+  const [upcomingOnly, setUpcomingOnly] = useState(false)
+  const [stats, setStats] = useState<AttendanceStats | null>(null)
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set())
+  const [loading, setLoading] = useState(true)
+  const user = getStoredUser<User>()
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      api.get<Event[]>(`/api/events?upcoming_only=${upcomingOnly}`),
+      user ? api.get<AttendanceStats>('/api/events/me/attendance-stats') : Promise.resolve(null),
+    ])
+      .then(([ev, st]) => {
+        setEvents(ev)
+        setStats(st)
+      })
+      .finally(() => setLoading(false))
+  }, [upcomingOnly])
+
+  async function checkIn(eventId: number) {
+    try {
+      await api.post(`/api/events/${eventId}/attendance`, {})
+      setCheckedIds((prev) => new Set([...prev, eventId]))
+      if (stats) {
+        setStats((s) =>
+          s
+            ? {
+                ...s,
+                attended_events: s.attended_events + 1,
+                attendance_rate: Math.round(
+                  ((s.attended_events + 1) / s.total_events) * 1000
+                ) / 10,
+              }
+            : s
+        )
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">일정</h1>
+        {user && stats && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-2 text-sm">
+            <span className="text-gray-500">내 출석률 </span>
+            <span className="font-bold text-indigo-700 text-lg">
+              {stats.attendance_rate}%
+            </span>
+            <span className="text-gray-400 ml-2">
+              ({stats.attended_events}/{stats.total_events})
+            </span>
+          </div>
+        )}
+      </div>
+
+      <label className="flex items-center gap-2 mb-4 text-sm cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={upcomingOnly}
+          onChange={(e) => setUpcomingOnly(e.target.checked)}
+          className="rounded"
+        />
+        <span>예정된 일정만 보기</span>
+      </label>
+
+      {loading ? (
+        <p className="text-gray-400 text-center py-12">불러오는 중...</p>
+      ) : events.length === 0 ? (
+        <p className="text-gray-400 text-center py-12">등록된 일정이 없습니다.</p>
+      ) : (
+        <div className="space-y-3">
+          {events.map((ev) => {
+            const date = new Date(ev.event_date)
+            const isPast = date < new Date()
+            const attended = checkedIds.has(ev.id)
+            return (
+              <div
+                key={ev.id}
+                className="bg-white border rounded-xl p-5 flex gap-4 items-start"
+              >
+                {/* 날짜 */}
+                <div className="text-center bg-indigo-50 rounded-lg px-4 py-2 shrink-0">
+                  <p className="text-xs text-indigo-400 font-medium">
+                    {date.toLocaleDateString('ko', { month: 'short' })}
+                  </p>
+                  <p className="text-2xl font-bold text-indigo-700">{date.getDate()}</p>
+                  <p className="text-xs text-indigo-400">
+                    {date.toLocaleDateString('ko', { weekday: 'short' })}
+                  </p>
+                </div>
+                {/* 내용 */}
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800">{ev.title}</p>
+                  {ev.description && (
+                    <p className="text-sm text-gray-500 mt-1">{ev.description}</p>
+                  )}
+                  <div className="flex gap-3 mt-2 text-xs text-gray-400">
+                    {ev.location && <span>📍 {ev.location}</span>}
+                    <span>
+                      {date.toLocaleTimeString('ko', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </div>
+                {/* 출석 버튼 */}
+                {user && !isPast && (
+                  <button
+                    onClick={() => checkIn(ev.id)}
+                    disabled={attended}
+                    className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      attended
+                        ? 'bg-green-100 text-green-700 cursor-default'
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    }`}
+                  >
+                    {attended ? '✓ 출석 완료' : '출석 체크'}
+                  </button>
+                )}
+                {isPast && (
+                  <span className="shrink-0 text-xs text-gray-300 self-center">종료</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
