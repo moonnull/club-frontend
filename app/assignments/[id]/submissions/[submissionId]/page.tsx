@@ -28,6 +28,11 @@ export default function SubmissionDetailPage() {
   const [posting, setPosting] = useState(false)
 
   function load() {
+    setLoading(true)
+    setNotFound(false)
+    setAssignment(null)
+    setSubmission(null)
+    setComments([])
     Promise.all([
       api.get<Assignment>(`/api/assignments/${id}`),
       api.get<Submission>(`/api/assignments/${id}/submissions/${submissionId}`),

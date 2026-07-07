@@ -21,6 +21,11 @@ export default function SubmitAssignmentPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    setLoading(true)
+    setAssignment(null)
+    setSubmission(null)
+    setContent('')
+    setFile(null)
     Promise.all([
       api.get<Assignment>(`/api/assignments/${id}`),
       api.get<Submission | null>(`/api/assignments/${id}/submission`),
@@ -79,8 +84,8 @@ export default function SubmitAssignmentPage() {
   const canSubmit = !notStarted && !closed
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col h-[calc(100vh-56px)]">
+      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">과제 제출</h1>
           <p className="text-xs text-gray-400 mt-1">
@@ -89,52 +94,56 @@ export default function SubmitAssignmentPage() {
         </div>
         <button
           onClick={() => router.push(`/assignments/${id}`)}
-          className="text-sm text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
         >
           ✕ 작성 취소
         </button>
       </div>
 
-      {submission?.is_final && (
-        <p className="text-sm text-green-500 mb-3">✓ 이미 최종 제출했습니다. 마감 전까지는 다시 수정할 수 있습니다.</p>
-      )}
+      <div className="flex-1 min-h-0 flex flex-col px-8 py-5">
+        {submission?.is_final && (
+          <p className="text-sm text-green-500 mb-3 shrink-0">✓ 이미 최종 제출했습니다. 마감 전까지는 다시 수정할 수 있습니다.</p>
+        )}
 
-      {notStarted ? (
-        <p className="text-sm text-gray-400">아직 제출 기간이 시작되지 않았습니다.</p>
-      ) : closed && !submission ? (
-        <p className="text-sm text-gray-400">제출 기간이 종료되었습니다.</p>
-      ) : (
-        <div className="space-y-3">
-          <RichTextEditor
-            content={content}
-            onChange={setContent}
-            editable={canSubmit}
-            placeholder="'/'를 입력하여 작성을 시작해보세요."
-          />
-          {canSubmit && <AttachmentPicker value={file ? [file] : []} onChange={(files) => setFile(files[files.length - 1] ?? null)} />}
+        {notStarted ? (
+          <p className="text-sm text-gray-400">아직 제출 기간이 시작되지 않았습니다.</p>
+        ) : closed && !submission ? (
+          <p className="text-sm text-gray-400">제출 기간이 종료되었습니다.</p>
+        ) : (
+          <div className="flex-1 min-h-0 flex flex-col gap-3">
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              editable={canSubmit}
+              placeholder="'/'를 입력하여 작성을 시작해보세요."
+              fullHeight
+            />
+            {error && <p className="text-red-500 text-sm shrink-0">{error}</p>}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          {canSubmit && (
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => save(false)}
-                disabled={saving}
-                className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
-              >
-                임시 저장
-              </button>
-              <button
-                onClick={() => save(true)}
-                disabled={saving}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
-              >
-                최종 제출
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+            {canSubmit && (
+              <div className="flex items-center justify-between gap-3 shrink-0 pt-2">
+                <AttachmentPicker value={file ? [file] : []} onChange={(files) => setFile(files[files.length - 1] ?? null)} />
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => save(false)}
+                    disabled={saving}
+                    className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  >
+                    임시 저장
+                  </button>
+                  <button
+                    onClick={() => save(true)}
+                    disabled={saving}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  >
+                    최종 제출
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

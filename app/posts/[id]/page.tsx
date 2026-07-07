@@ -18,6 +18,10 @@ export default function PostDetailPage() {
   const user = getStoredUser<User>()
 
   async function load() {
+    setLoading(true)
+    setPost(null)
+    setComments([])
+    setSidebarPosts([])
     try {
       const [p, c] = await Promise.all([
         api.get<Post>(`/api/posts/${id}`),

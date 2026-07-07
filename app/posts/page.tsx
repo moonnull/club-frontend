@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { api, getStoredUser } from '@/lib/api'
 import type { BoardCategory, Post, User } from '@/lib/types'
 
@@ -21,9 +21,13 @@ function boardColor(key: string) {
 
 export default function PostsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const boardType = searchParams.get('board_type') ?? ''
+  function setBoardType(key: string) {
+    router.replace(key ? `/posts?board_type=${key}` : '/posts')
+  }
   const [posts, setPosts] = useState<Post[]>([])
   const [boards, setBoards] = useState<BoardCategory[]>([])
-  const [boardType, setBoardType] = useState('')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)

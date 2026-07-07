@@ -66,13 +66,23 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">글쓰기</h1>
-      <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="flex flex-col h-[calc(100vh-56px)]">
+      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">글쓰기</h1>
+        <button
+          type="button"
+          onClick={() => router.push('/posts')}
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
+        >
+          ✕ 작성 취소
+        </button>
+      </div>
+
+      <div className="flex-1 min-h-0 flex flex-col gap-3 px-8 py-5">
         <select
           value={boardType}
           onChange={(e) => setBoardType(e.target.value)}
-          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
         >
           {boards.map((b) => (
             <option key={b.key} value={b.key}>{b.name}</option>
@@ -81,34 +91,26 @@ export default function NewPostPage() {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="제목"
+          placeholder="제목을 입력하세요"
           required
-          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+          className="w-full bg-transparent text-2xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border-b border-gray-200 dark:border-gray-800 pb-3 focus:outline-none shrink-0"
         />
-        <div>
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="내용을 입력하세요"
-            required
-            rows={12}
-            className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-          />
-          <div className="mt-1.5">
-            <ImageInsertButton onUploaded={insertImage} />
-          </div>
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="내용을 입력하세요"
+          required
+          className="w-full flex-1 min-h-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 resize-none focus:outline-none"
+        />
+        <div className="shrink-0">
+          <ImageInsertButton onUploaded={insertImage} />
         </div>
-        <AttachmentPicker value={attachments} onChange={setAttachments} />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => router.push('/posts')}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 dark:hover:text-white transition"
-          >
-            취소
-          </button>
+        <div className="shrink-0">
+          <AttachmentPicker value={attachments} onChange={setAttachments} />
+        </div>
+        {error && <p className="text-red-500 text-sm shrink-0">{error}</p>}
+        <div className="flex justify-end shrink-0">
           <button
             type="submit"
             disabled={loading || !boardType}
@@ -117,7 +119,7 @@ export default function NewPostPage() {
             {loading ? '등록 중...' : '등록'}
           </button>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   )
 }

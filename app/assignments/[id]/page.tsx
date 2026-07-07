@@ -23,6 +23,10 @@ export default function AssignmentDetailPage() {
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
+    setLoading(true)
+    setNotFound(false)
+    setAssignment(null)
+    setSubmissions([])
     api
       .get<Assignment>(`/api/assignments/${id}`)
       .then((a) => {
