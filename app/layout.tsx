@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Navbar from '@/components/Navbar'
+import AuthGuard from '@/components/AuthGuard'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,8 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${inter.className} bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-gray-100`}>
-        <Navbar />
-        {children}
+        <AuthGuard>{children}</AuthGuard>
       </body>
     </html>
   )

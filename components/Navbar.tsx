@@ -18,7 +18,7 @@ export default function Navbar() {
   function logout() {
     clearAuth()
     setUser(null)
-    router.push('/')
+    router.push('/login')
   }
 
   return (
@@ -54,6 +54,14 @@ export default function Navbar() {
       >
         포트폴리오
       </Link>
+      {user?.role === 'ADMIN' && (
+        <Link
+          href="/admin"
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+        >
+          관리자
+        </Link>
+      )}
 
       <div className="flex-1" />
 

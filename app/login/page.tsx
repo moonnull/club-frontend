@@ -1,12 +1,14 @@
 'use client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { api, saveAuth } from '@/lib/api'
 import type { User } from '@/lib/types'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pending = searchParams.get('pending') === '1'
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [error, setError] = useState('')
@@ -37,6 +39,11 @@ export default function LoginPage() {
           Chimera
         </h1>
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+          {pending && (
+            <p className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-2 mb-4">
+              회원가입이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.
+            </p>
+          )}
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">

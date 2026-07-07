@@ -30,7 +30,7 @@ export default function SignupPage() {
         ...form,
         generation: Number(form.generation),
       })
-      router.push('/login')
+      router.push('/login?pending=1')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
     } finally {
