@@ -35,7 +35,7 @@ export default function PostsPage() {
   const boardMap = Object.fromEntries(boards.map((b) => [b.key, b.name]))
 
   useEffect(() => {
-    api.get<BoardCategory[]>('/api/boards').then(setBoards)
+    api.get<BoardCategory[]>('/api/boards').then((all) => setBoards(all.filter((b) => b.key !== 'NOTICE')))
   }, [])
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function PostsPage() {
     if (debouncedSearch) p.set('search', debouncedSearch)
     api
       .get<Post[]>(`/api/posts?${p}`)
-      .then(setPosts)
+      .then((all) => setPosts(all.filter((post) => post.board_type !== 'NOTICE')))
       .finally(() => setLoading(false))
   }, [boardType, debouncedSearch])
 

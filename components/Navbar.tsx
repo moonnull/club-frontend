@@ -31,7 +31,7 @@ export default function Navbar() {
       </Link>
 
       <Link
-        href="/posts?board_type=NOTICE"
+        href="/notices"
         className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
       >
         공지사항

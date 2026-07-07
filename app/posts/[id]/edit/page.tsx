@@ -118,7 +118,7 @@ export default function EditPostPage() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="제목을 입력하세요"
           required
-          className="w-full bg-transparent text-2xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border-b border-gray-200 dark:border-gray-800 pb-3 focus:outline-none shrink-0"
+          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
         />
         <textarea
           ref={textareaRef}
