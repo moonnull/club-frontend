@@ -113,17 +113,36 @@ export interface Assignment extends AssignmentListItem {
   files: AssignmentFile[]
 }
 
-export interface Submission {
+export type Grade = 'PASS' | 'FAIL'
+
+export interface SubmissionListItem {
   id: number
   assignment_id: number
+  is_final: boolean
+  grade: Grade | null
+  submitted_at: string | null
+  created_at: string
+  comment_count: number
+  user: User
+}
+
+export interface Submission extends SubmissionListItem {
   content: string
   attachment_url: string | null
   attachment_filename: string | null
   attachment_content_type: string | null
   attachment_size: number | null
-  is_final: boolean
-  submitted_at: string | null
-  created_at: string
   updated_at: string
-  user: User
+}
+
+export interface SubmissionComment {
+  id: number
+  submission_id: number
+  content: string
+  attachment_url: string | null
+  attachment_filename: string | null
+  attachment_content_type: string | null
+  attachment_size: number | null
+  created_at: string
+  author: User
 }
