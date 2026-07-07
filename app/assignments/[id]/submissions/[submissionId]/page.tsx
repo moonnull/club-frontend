@@ -111,7 +111,7 @@ export default function SubmissionDetailPage() {
           )}
         </div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-          {assignment.title}_{submission.user.name} 제출
+          {submission.title || `${assignment.title}_${submission.user.name} 제출`}
         </h1>
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-5">
           <span className="font-medium text-gray-600 dark:text-gray-300">{submission.user.name}</span>

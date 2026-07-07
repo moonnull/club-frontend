@@ -5,7 +5,14 @@ import { api, getStoredUser } from '@/lib/api'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import { formatDeadline, isBeforeStart, isPastDeadline } from '@/lib/formatDeadline'
-import type { Assignment, Submission, SubmissionListItem, UploadResult, User } from '@/lib/types'
+import type {
+  Assignment,
+  AssignmentQuestion,
+  Submission,
+  SubmissionListItem,
+  UploadResult,
+  User,
+} from '@/lib/types'
 
 const GRADE_LABEL: Record<string, string> = { PASS: '합격', FAIL: '불합격' }
 const GRADE_COLOR: Record<string, string> = {
@@ -22,13 +29,18 @@ export default function AssignmentDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
-  const [rightTab, setRightTab] = useState<'write' | 'list'>('write')
+  const [rightTab, setRightTab] = useState<'write' | 'list' | 'qna'>('write')
   const [mySubmission, setMySubmission] = useState<Submission | null>(null)
   const [submissions, setSubmissions] = useState<SubmissionListItem[]>([])
+  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [file, setFile] = useState<UploadResult | null>(null)
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  const [questions, setQuestions] = useState<AssignmentQuestion[]>([])
+  const [questionText, setQuestionText] = useState('')
+  const [postingQuestion, setPostingQuestion] = useState(false)
 
   const [splitPercent, setSplitPercent] = useState(62)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -40,19 +52,26 @@ export default function AssignmentDetailPage() {
     setAssignment(null)
     setMySubmission(null)
     setSubmissions([])
+    setQuestions([])
+    setTitle('')
     setContent('')
     setFile(null)
     setRightTab('write')
 
     const requests: Promise<unknown>[] = [
-      api.get<Assignment>(`/api/assignments/${id}`).then((a) => setAssignment(a)),
+      api.get<Assignment>(`/api/assignments/${id}`).then((a) => {
+        setAssignment(a)
+        setTitle((prev) => prev || (user ? `${a.title}_${user.name} 제출` : ''))
+      }),
       api.get<SubmissionListItem[]>(`/api/assignments/${id}/submissions`).then(setSubmissions),
+      api.get<AssignmentQuestion[]>(`/api/assignments/${id}/questions`).then(setQuestions),
     ]
     if (user) {
       requests.push(
         api.get<Submission | null>(`/api/assignments/${id}/submission`).then((sub) => {
           if (sub) {
             setMySubmission(sub)
+            setTitle(sub.title)
             setContent(sub.content)
             if (sub.attachment_url) {
               setFile({
@@ -82,6 +101,7 @@ export default function AssignmentDetailPage() {
     setSaving(true)
     try {
       const result = await api.put<Submission>(`/api/assignments/${id}/submission`, {
+        title,
         content,
         attachment: file,
         is_final: isFinal,
@@ -99,6 +119,26 @@ export default function AssignmentDetailPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function postQuestion() {
+    if (!questionText.trim()) return
+    setPostingQuestion(true)
+    try {
+      const q = await api.post<AssignmentQuestion>(`/api/assignments/${id}/questions`, { content: questionText })
+      setQuestions((prev) => [...prev, q])
+      setQuestionText('')
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    } finally {
+      setPostingQuestion(false)
+    }
+  }
+
+  async function deleteQuestion(qid: number) {
+    if (!confirm('질문을 삭제하시겠습니까?')) return
+    await api.del(`/api/assignment-questions/${qid}`)
+    setQuestions((prev) => prev.filter((q) => q.id !== qid))
   }
 
   function onDividerMouseDown() {
@@ -194,7 +234,7 @@ export default function AssignmentDetailPage() {
         <span className="text-gray-400 text-xs select-none">⋮</span>
       </div>
 
-      {/* ── 오른쪽: 제출 작성 / 제출 현황 ── */}
+      {/* ── 오른쪽: 제출 작성 / 제출 현황 / 질문 ── */}
       <div style={{ width: `${100 - splitPercent}%` }} className="min-w-0 flex flex-col border-l border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <button
@@ -217,11 +257,21 @@ export default function AssignmentDetailPage() {
           >
             제출 현황 ({submissions.length})
           </button>
+          <button
+            onClick={() => setRightTab('qna')}
+            className={`text-sm font-medium transition ${
+              rightTab === 'qna'
+                ? 'text-gray-900 dark:text-white border-b-2 border-indigo-500 pb-0.5'
+                : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            질문 ({questions.length})
+          </button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {!user ? (
-            <p className="text-sm text-gray-400">로그인 후 과제 제출이 가능합니다.</p>
+            <p className="text-sm text-gray-400">로그인 후 이용 가능합니다.</p>
           ) : rightTab === 'write' ? (
             <div className="flex flex-col h-full gap-3">
               {mySubmission?.is_final && (
@@ -233,6 +283,13 @@ export default function AssignmentDetailPage() {
                 <p className="text-sm text-gray-400">제출 기간이 종료되었습니다.</p>
               ) : (
                 <>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="제목을 입력하세요"
+                    disabled={!canSubmit}
+                    className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0 disabled:opacity-60"
+                  />
                   <RichTextEditor
                     content={content}
                     onChange={setContent}
@@ -265,39 +322,89 @@ export default function AssignmentDetailPage() {
                 </>
               )}
             </div>
-          ) : submissions.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">아직 제출한 사람이 없습니다.</p>
-          ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {submissions.map((s) => (
-                <li
-                  key={s.id}
-                  onClick={() => router.push(`/assignments/${id}/submissions/${s.id}`)}
-                  className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition -mx-4 px-4"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-medium">
-                      최종제출
-                    </span>
-                    {s.grade && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${GRADE_COLOR[s.grade]}`}>
-                        {GRADE_LABEL[s.grade]}
+          ) : rightTab === 'list' ? (
+            submissions.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-10">아직 제출한 사람이 없습니다.</p>
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                {submissions.map((s) => (
+                  <li
+                    key={s.id}
+                    onClick={() => router.push(`/assignments/${id}/submissions/${s.id}`)}
+                    className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition -mx-4 px-4"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-medium">
+                        최종제출
                       </span>
-                    )}
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-                      {assignment.title}_{s.user.name} 제출
-                    </span>
-                    {s.comment_count > 0 && (
-                      <span className="text-xs text-indigo-500 dark:text-indigo-400 shrink-0">💬{s.comment_count}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>{s.user.name}</span>
-                    <span>{new Date(s.submitted_at ?? s.created_at).toLocaleString('ko')}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      {s.grade && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${GRADE_COLOR[s.grade]}`}>
+                          {GRADE_LABEL[s.grade]}
+                        </span>
+                      )}
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                        {s.title || `${assignment.title}_${s.user.name} 제출`}
+                      </span>
+                      {s.comment_count > 0 && (
+                        <span className="text-xs text-indigo-500 dark:text-indigo-400 shrink-0">💬{s.comment_count}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>{s.user.name}</span>
+                      <span>{new Date(s.submitted_at ?? s.created_at).toLocaleString('ko')}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 mb-3">
+                {questions.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-10">아직 질문이 없습니다.</p>
+                ) : (
+                  questions.map((q) => (
+                    <div key={q.id} className="border-b border-gray-100 dark:border-gray-800/60 pb-3 last:border-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{q.author.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400">{new Date(q.created_at).toLocaleString('ko')}</span>
+                          {(user.id === q.author.id || user.role === 'ADMIN') && (
+                            <button
+                              onClick={() => deleteQuestion(q.id)}
+                              className="text-xs text-gray-400 hover:text-red-500 transition"
+                            >
+                              삭제
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">
+                        {q.content}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="shrink-0 space-y-2">
+                <textarea
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
+                  placeholder="과제에 대해 질문을 남겨보세요."
+                  rows={3}
+                  className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-indigo-500 transition placeholder-gray-400 dark:placeholder-gray-600"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={postQuestion}
+                    disabled={postingQuestion}
+                    className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition disabled:opacity-50"
+                  >
+                    ✏️ 질문하기
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

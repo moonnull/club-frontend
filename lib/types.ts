@@ -118,6 +118,7 @@ export type Grade = 'PASS' | 'FAIL'
 export interface SubmissionListItem {
   id: number
   assignment_id: number
+  title: string
   is_final: boolean
   grade: Grade | null
   submitted_at: string | null
@@ -143,6 +144,14 @@ export interface SubmissionComment {
   attachment_filename: string | null
   attachment_content_type: string | null
   attachment_size: number | null
+  created_at: string
+  author: User
+}
+
+export interface AssignmentQuestion {
+  id: number
+  assignment_id: number
+  content: string
   created_at: string
   author: User
 }
