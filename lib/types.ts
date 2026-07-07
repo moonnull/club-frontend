@@ -93,3 +93,37 @@ export interface Project {
   updated_at: string
   members: ProjectMember[]
 }
+
+export interface AssignmentFile extends UploadResult {
+  id: number
+}
+
+export interface AssignmentListItem {
+  id: number
+  title: string
+  start_at: string
+  end_at: string
+  created_at: string
+  author: User
+}
+
+export interface Assignment extends AssignmentListItem {
+  content: string
+  updated_at: string
+  files: AssignmentFile[]
+}
+
+export interface Submission {
+  id: number
+  assignment_id: number
+  content: string
+  attachment_url: string | null
+  attachment_filename: string | null
+  attachment_content_type: string | null
+  attachment_size: number | null
+  is_final: boolean
+  submitted_at: string | null
+  created_at: string
+  updated_at: string
+  user: User
+}

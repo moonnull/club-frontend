@@ -9,10 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.3.3",
+    "@tiptap/extension-bubble-menu": "^3.27.3",
+    "@tiptap/extension-image": "^3.27.3",
+    "@tiptap/extension-placeholder": "^3.27.3",
+    "@tiptap/pm": "^3.27.3",
+    "@tiptap/react": "^3.27.3",
+    "@tiptap/starter-kit": "^3.27.3",
+    "@tiptap/suggestion": "^3.27.3",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
-    "@netlify/plugin-nextjs": "^5.3.3"
+    "tippy.js": "^6.3.7"
   },
   "devDependencies": {
     "@types/node": "^20",

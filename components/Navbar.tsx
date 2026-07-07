@@ -43,6 +43,12 @@ export default function Navbar() {
         게시판
       </Link>
       <Link
+        href="/assignments"
+        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+      >
+        과제
+      </Link>
+      <Link
         href="/events"
         className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
       >
