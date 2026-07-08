@@ -3,6 +3,8 @@ import type {
   Assignment,
   AssignmentListItem,
   AssignmentQuestion,
+  AssignmentQuestionComment,
+  AssignmentQuestionListItem,
   Submission,
   SubmissionComment,
   SubmissionListItem,
@@ -97,13 +99,29 @@ export function deleteSubmissionComment(commentId: number | string) {
 }
 
 export function listQuestions(assignmentId: number | string) {
-  return api.get<AssignmentQuestion[]>(`/api/assignments/${assignmentId}/questions`)
+  return api.get<AssignmentQuestionListItem[]>(`/api/assignments/${assignmentId}/questions`)
 }
 
-export function createQuestion(assignmentId: number | string, content: string) {
-  return api.post<AssignmentQuestion>(`/api/assignments/${assignmentId}/questions`, { content })
+export function getQuestion(questionId: number | string) {
+  return api.get<AssignmentQuestion>(`/api/assignment-questions/${questionId}`)
+}
+
+export function createQuestion(assignmentId: number | string, title: string, content: string) {
+  return api.post<AssignmentQuestion>(`/api/assignments/${assignmentId}/questions`, { title, content })
 }
 
 export function deleteQuestion(questionId: number | string) {
   return api.del(`/api/assignment-questions/${questionId}`)
+}
+
+export function listQuestionComments(questionId: number | string) {
+  return api.get<AssignmentQuestionComment[]>(`/api/assignment-questions/${questionId}/comments`)
+}
+
+export function createQuestionComment(questionId: number | string, content: string) {
+  return api.post<AssignmentQuestionComment>(`/api/assignment-questions/${questionId}/comments`, { content })
+}
+
+export function deleteQuestionComment(commentId: number | string) {
+  return api.del(`/api/assignment-question-comments/${commentId}`)
 }

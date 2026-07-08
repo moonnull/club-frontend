@@ -148,9 +148,23 @@ export interface SubmissionComment {
   author: User
 }
 
-export interface AssignmentQuestion {
+export interface AssignmentQuestionListItem {
   id: number
   assignment_id: number
+  title: string
+  is_answered: boolean
+  comment_count: number
+  created_at: string
+  author: User
+}
+
+export interface AssignmentQuestion extends AssignmentQuestionListItem {
+  content: string
+}
+
+export interface AssignmentQuestionComment {
+  id: number
+  question_id: number
   content: string
   created_at: string
   author: User
