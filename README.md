@@ -45,6 +45,17 @@
 - 회원 승인 대기 목록 / 전체 회원 (역할 변경, 삭제)
 - 게시판 카테고리 관리 (추가/이름 수정/관리자 전용 토글/삭제 — NOTICE는 삭제 불가)
 
+## 아키텍처: 페이지는 도메인별 API 모듈만 호출
+
+Next.js App Router는 `app/**/page.tsx` 파일 위치가 라우팅을 결정하므로 페이지 파일 자체를 계층별로 옮길 수는 없지만, **데이터 접근 로직은 페이지에서 분리**되어 있고 **새 기능을 추가할 때도 이 규칙을 그대로 따릅니다.**
+
+- 페이지/컴포넌트는 `fetch`나 `/api/...` 원시 경로를 직접 다루지 않고, `lib/api/<domain>.ts`가 export하는 타입이 있는 함수(`listPosts()`, `createAssignment()` 등)만 호출
+- `lib/api/client.ts` — 저수준 fetch 래퍼 (JSON/form-urlencoded/multipart 자동 처리, 인증 토큰 첨부). 도메인 모듈들이 내부적으로만 이걸 사용하고, 페이지는 직접 쓰지 않음
+- `lib/api/<domain>.ts` (auth, posts, boards, assignments, events, projects, admin, uploads) — 도메인별 엔드포인트 호출 함수. `/notices`는 별도 모듈 없이 `posts.ts`를 `board_type: 'NOTICE'`로 재사용
+- `lib/session.ts` — localStorage 기반 로그인 세션 헬퍼 (`saveAuth`/`clearAuth`/`getStoredUser`), 네트워크 호출이 아니라서 `lib/api/`와 분리
+
+새 기능을 추가할 때는 백엔드에 대응하는 엔드포인트가 생기면 먼저 `lib/api/<domain>.ts`에 함수를 추가하고, 페이지는 그 함수만 호출하도록 만듭니다.
+
 ## 프로젝트 구조
 
 ```
@@ -65,9 +76,11 @@ components/
   PostContent.tsx           게시글 본문 렌더링 (인라인 이미지 마크다운 파싱)
   Navbar.tsx, AuthGuard.tsx, ThemeToggle.tsx
 lib/
-  api.ts             fetch 래퍼 (JSON/form-urlencoded/multipart 자동 처리, 인증 토큰 첨부)
-  types.ts            API 응답 타입 정의
-  formatDeadline.ts    제출 기한 문자열 포맷 ("YYYY-MM-DD ~ YYYY-MM-DD HH:mm (n주)")
+  api/client.ts       저수준 fetch 래퍼 (도메인 모듈 전용, 페이지에서 직접 사용 안 함)
+  api/<domain>.ts     도메인별 API 함수 (auth/posts/boards/assignments/events/projects/admin/uploads)
+  session.ts          로그인 세션 localStorage 헬퍼
+  types.ts             API 응답 타입 정의
+  formatDeadline.ts     제출 기한 문자열 포맷 ("YYYY-MM-DD ~ YYYY-MM-DD HH:mm (n주)")
 ```
 
 ## 로컬 개발
