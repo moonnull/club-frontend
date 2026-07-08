@@ -358,9 +358,9 @@ function QuestionCard({
           <span>·</span>
           <span>{new Date(question.created_at).toLocaleString('ko')}</span>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed border-t border-gray-200 dark:border-gray-800 pt-4">
-          {question.content}
-        </p>
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+          <RichTextEditor content={question.content} editable={false} />
+        </div>
 
         <div className="border-t border-gray-200 dark:border-gray-800 mt-5 pt-4">
           <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">답변 ({comments.length})</p>
