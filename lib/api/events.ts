@@ -8,8 +8,9 @@ export interface EventPayload {
   location?: string | null
 }
 
-export function listEvents(upcomingOnly: boolean) {
-  return api.get<Event[]>(`/api/events?upcoming_only=${upcomingOnly}`)
+export function listEvents(upcomingOnly: boolean, limit?: number) {
+  const limitParam = limit ? `&limit=${limit}` : ''
+  return api.get<Event[]>(`/api/events?upcoming_only=${upcomingOnly}${limitParam}`)
 }
 
 export function getEvent(id: number | string) {

@@ -55,6 +55,12 @@ export default function Navbar() {
         일정
       </Link>
       <Link
+        href="/calendar"
+        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+      >
+        캘린더
+      </Link>
+      <Link
         href="/projects"
         className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
       >

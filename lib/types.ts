@@ -169,3 +169,13 @@ export interface AssignmentQuestionComment {
   created_at: string
   author: User
 }
+
+export interface CalendarItem {
+  id: number
+  title: string
+  memo: string | null
+  item_date: string
+  is_done: boolean
+  created_at: string
+  author: User
+}

@@ -5,7 +5,7 @@ function pad(n: number): string {
 // 백엔드는 UTC datetime을 타임존 표기 없이 반환한다(예: "2026-07-08T07:54:38").
 // 타임존 표기가 없는 ISO 문자열은 브라우저 로컬 시간으로 해석되어 KST 등에서
 // 시각이 어긋나므로, UTC로 명시해서 파싱한다.
-function toDate(iso: string): Date {
+export function toDate(iso: string): Date {
   return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(iso) ? iso : `${iso}Z`)
 }
 
