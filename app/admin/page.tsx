@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { approveUser, deleteUser, listUsers, updateUserRole } from '@/lib/api/admin'
+import { approveUser, deleteUser, listUsers, resetUserPassword, updateUserRole } from '@/lib/api/admin'
 import { createBoard, deleteBoard, listBoards, updateBoard } from '@/lib/api/boards'
 import { getStoredUser } from '@/lib/session'
 import type { BoardCategory, User } from '@/lib/types'
@@ -63,6 +63,16 @@ export default function AdminPage() {
     try {
       await deleteUser(user.id)
       load()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  async function resetPassword(user: User) {
+    if (!confirm(`${user.name} 님의 비밀번호를 초기화할까요? 새 임시 비밀번호가 발급됩니다.`)) return
+    try {
+      const { temporary_password } = await resetUserPassword(user.id)
+      window.prompt(`${user.name} 님의 임시 비밀번호입니다. 복사해서 안전하게 전달해주세요.`, temporary_password)
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
     }
@@ -196,6 +206,12 @@ export default function AdminPage() {
                       className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition disabled:opacity-30"
                     >
                       {u.role === 'ADMIN' ? '관리자 해제' : '관리자 지정'}
+                    </button>
+                    <button
+                      onClick={() => resetPassword(u)}
+                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
+                    >
+                      비밀번호 초기화
                     </button>
                     <button
                       onClick={() => remove(u)}

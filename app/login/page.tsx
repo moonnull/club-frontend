@@ -9,6 +9,8 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pending = searchParams.get('pending') === '1'
+  const expired = searchParams.get('reason') === 'expired'
+  const resetDone = searchParams.get('reason') === 'reset'
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [error, setError] = useState('')
@@ -44,6 +46,16 @@ export default function LoginPage() {
               회원가입이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.
             </p>
           )}
+          {expired && (
+            <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mb-4">
+              세션이 만료되어 로그아웃되었습니다. 다시 로그인해주세요.
+            </p>
+          )}
+          {resetDone && (
+            <p className="text-xs text-green-300 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2 mb-4">
+              비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.
+            </p>
+          )}
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">
@@ -77,7 +89,9 @@ export default function LoginPage() {
                 <Link href="/signup" className="hover:text-gray-300 transition">
                   회원가입
                 </Link>
-                <span className="cursor-default">비밀번호 찾기</span>
+                <Link href="/forgot-password" className="hover:text-gray-300 transition">
+                  비밀번호 찾기
+                </Link>
               </div>
               <button
                 type="submit"

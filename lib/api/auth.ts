@@ -21,3 +21,11 @@ export function signup(data: SignupPayload) {
 export function getMe() {
   return api.get<User>('/api/auth/me')
 }
+
+export function forgotPassword(email: string) {
+  return api.post<{ message: string }>('/api/auth/forgot-password', { email })
+}
+
+export function resetPassword(token: string, newPassword: string) {
+  return api.post<{ message: string }>('/api/auth/reset-password', { token, new_password: newPassword })
+}

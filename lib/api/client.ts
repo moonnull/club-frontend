@@ -1,3 +1,5 @@
+import { clearAuth } from '../session'
+
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 function getToken(): string | null {
@@ -17,7 +19,14 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (res.status === 204) return null as T
   const data = await res.json()
-  if (!res.ok) throw new Error(data.detail ?? '오류가 발생했습니다.')
+  if (!res.ok) {
+    // 로그인 요청 자체의 401(자격증명 오류)은 세션 만료가 아니므로 제외한다.
+    if (res.status === 401 && tok && path !== '/api/auth/login') {
+      clearAuth()
+      window.location.href = '/login?reason=expired'
+    }
+    throw new Error(data.detail ?? '오류가 발생했습니다.')
+  }
   return data
 }
 

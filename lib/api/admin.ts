@@ -16,3 +16,7 @@ export function updateUserRole(userId: number, role: 'MEMBER' | 'ADMIN') {
 export function deleteUser(userId: number) {
   return api.del(`/api/admin/users/${userId}`)
 }
+
+export function resetUserPassword(userId: number) {
+  return api.post<{ temporary_password: string }>(`/api/admin/users/${userId}/reset-password`, {})
+}
