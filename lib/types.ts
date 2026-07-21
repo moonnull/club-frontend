@@ -52,48 +52,6 @@ export interface Comment {
   author: User
 }
 
-export interface Event {
-  id: number
-  title: string
-  description: string | null
-  event_date: string
-  location: string | null
-  created_at: string
-  creator: User
-}
-
-export interface Attendance {
-  id: number
-  event_id: number
-  checked_at: string
-  user: User
-}
-
-export interface AttendanceStats {
-  total_events: number
-  attended_events: number
-  attendance_rate: number
-}
-
-export interface ProjectMember {
-  user: User
-  role: string | null
-}
-
-export interface Project {
-  id: number
-  title: string
-  description: string | null
-  generation: number | null
-  tech_stack: string | null
-  github_url: string | null
-  demo_url: string | null
-  thumbnail_url: string | null
-  created_at: string
-  updated_at: string
-  members: ProjectMember[]
-}
-
 export interface AssignmentFile extends UploadResult {
   id: number
 }
@@ -178,4 +136,13 @@ export interface CalendarItem {
   is_done: boolean
   created_at: string
   author: User
+}
+
+export interface Notification {
+  id: number
+  message: string
+  link: string | null
+  is_read: boolean
+  created_at: string
+  sender: User | null
 }

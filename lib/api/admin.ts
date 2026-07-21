@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { User } from '../types'
+import type { Notification, User } from '../types'
 
 export function listUsers() {
   return api.get<User[]>('/api/admin/users')
@@ -19,4 +19,8 @@ export function deleteUser(userId: number) {
 
 export function resetUserPassword(userId: number) {
   return api.post<{ temporary_password: string }>(`/api/admin/users/${userId}/reset-password`, {})
+}
+
+export function sendNotification(userId: number, message: string) {
+  return api.post<Notification>(`/api/admin/users/${userId}/notifications`, { message })
 }

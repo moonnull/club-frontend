@@ -2,8 +2,6 @@ import Link from 'next/link'
 
 const cards = [
   { href: '/posts', emoji: '📋', title: '게시판', desc: '공지 · 자유게시판 · Q&A · 모집' },
-  { href: '/events', emoji: '📅', title: '일정 / 출석', desc: '정기모임 · 세미나 · 해커톤' },
-  { href: '/projects', emoji: '🚀', title: '포트폴리오', desc: '우리가 함께 만든 프로젝트들' },
 ]
 
 export default function HomePage() {
@@ -13,7 +11,7 @@ export default function HomePage() {
         Chimera
       </h1>
       <p className="text-gray-400 text-lg mb-14">함께 성장하는 보안 동아리</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+      <div className="grid grid-cols-1 gap-4 max-w-xs mx-auto">
         {cards.map((c) => (
           <Link
             key={c.href}

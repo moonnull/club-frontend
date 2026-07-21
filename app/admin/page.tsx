@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { approveUser, deleteUser, listUsers, resetUserPassword, updateUserRole } from '@/lib/api/admin'
+import { approveUser, deleteUser, listUsers, resetUserPassword, sendNotification, updateUserRole } from '@/lib/api/admin'
 import { createBoard, deleteBoard, listBoards, updateBoard } from '@/lib/api/boards'
 import { getStoredUser } from '@/lib/session'
 import type { BoardCategory, User } from '@/lib/types'
@@ -73,6 +73,17 @@ export default function AdminPage() {
     try {
       const { temporary_password } = await resetUserPassword(user.id)
       window.prompt(`${user.name} 님의 임시 비밀번호입니다. 복사해서 안전하게 전달해주세요.`, temporary_password)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  async function sendUserNotification(user: User) {
+    const message = window.prompt(`${user.name} 님에게 보낼 알림 메시지를 입력하세요.`)
+    if (!message || !message.trim()) return
+    try {
+      await sendNotification(user.id, message.trim())
+      alert('알림을 보냈습니다.')
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
     }
@@ -212,6 +223,12 @@ export default function AdminPage() {
                       className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
                     >
                       비밀번호 초기화
+                    </button>
+                    <button
+                      onClick={() => sendUserNotification(u)}
+                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
+                    >
+                      알림 보내기
                     </button>
                     <button
                       onClick={() => remove(u)}

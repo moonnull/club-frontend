@@ -1,7 +1,6 @@
 'use client'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { listEvents } from '@/lib/api/events'
 import { listAssignments } from '@/lib/api/assignments'
 import {
   createCalendarItem,
@@ -11,7 +10,7 @@ import {
 } from '@/lib/api/calendar'
 import { getStoredUser } from '@/lib/session'
 import { toDate } from '@/lib/formatDeadline'
-import type { AssignmentListItem, CalendarItem, Event, User } from '@/lib/types'
+import type { AssignmentListItem, CalendarItem, User } from '@/lib/types'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -33,7 +32,6 @@ export default function CalendarPage() {
 
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
-  const [events, setEvents] = useState<Event[]>([])
   const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
   const [items, setItems] = useState<CalendarItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,23 +46,13 @@ export default function CalendarPage() {
   useEffect(() => {
     setLoading(true)
     setEditingDate(null)
-    Promise.all([listEvents(false, 100), listAssignments(), listCalendarItems(monthStart, monthEnd)])
-      .then(([ev, asg, cal]) => {
-        setEvents(ev)
+    Promise.all([listAssignments(), listCalendarItems(monthStart, monthEnd)])
+      .then(([asg, cal]) => {
         setAssignments(asg)
         setItems(cal)
       })
       .finally(() => setLoading(false))
   }, [year, month])
-
-  const eventsByDay = useMemo(() => {
-    const map: Record<string, Event[]> = {}
-    for (const ev of events) {
-      const key = dateKeyFromDate(toDate(ev.event_date))
-      ;(map[key] ??= []).push(ev)
-    }
-    return map
-  }, [events])
 
   const assignmentsByDay = useMemo(() => {
     const map: Record<string, AssignmentListItem[]> = {}
@@ -203,7 +191,6 @@ export default function CalendarPage() {
               }
               const key = dateKey(year, month, day)
               const isToday = key === todayKey
-              const dayEvents = eventsByDay[key] ?? []
               const dayAssignments = assignmentsByDay[key] ?? []
               const dayItems = itemsByDay[key] ?? []
               return (
@@ -224,16 +211,6 @@ export default function CalendarPage() {
                     {day}
                   </span>
                   <div className="mt-1 space-y-0.5">
-                    {dayEvents.map((ev) => (
-                      <Link
-                        key={`ev-${ev.id}`}
-                        href="/events"
-                        onClick={(e) => e.stopPropagation()}
-                        className="block truncate text-[11px] px-1 py-0.5 rounded bg-indigo-500/15 text-indigo-500 hover:underline"
-                      >
-                        🗓 {ev.title}
-                      </Link>
-                    ))}
                     {dayAssignments.map((a) => (
                       <Link
                         key={`asg-${a.id}`}
