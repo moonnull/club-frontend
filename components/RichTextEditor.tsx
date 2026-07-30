@@ -45,6 +45,25 @@ export default function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
+    editorProps: editable
+      ? {
+          handlePaste: (view, event) => {
+            const imageItem = Array.from(event.clipboardData?.items ?? []).find((item) =>
+              item.type.startsWith('image/')
+            )
+            const file = imageItem?.getAsFile()
+            if (!file) return false
+            event.preventDefault()
+            uploadFile(file)
+              .then((result) => {
+                const node = view.state.schema.nodes.image.create({ src: result.url })
+                view.dispatch(view.state.tr.replaceSelectionWith(node))
+              })
+              .catch((err: unknown) => alert(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.'))
+            return true
+          },
+        }
+      : undefined,
   })
 
   useEffect(() => {
