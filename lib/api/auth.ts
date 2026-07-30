@@ -29,3 +29,12 @@ export function forgotPassword(email: string) {
 export function resetPassword(token: string, newPassword: string) {
   return api.post<{ message: string }>('/api/auth/reset-password', { token, new_password: newPassword })
 }
+
+export interface UpdateProfilePayload {
+  name?: string
+  password?: string
+}
+
+export function updateProfile(data: UpdateProfilePayload) {
+  return api.put<User>('/api/auth/me', data)
+}

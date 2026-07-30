@@ -1,11 +1,13 @@
 export function saveAuth(token: string, user: object) {
   localStorage.setItem('token', token)
   localStorage.setItem('user', JSON.stringify(user))
+  window.dispatchEvent(new Event('auth-changed'))
 }
 
 export function clearAuth() {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
+  window.dispatchEvent(new Event('auth-changed'))
 }
 
 export function getStoredUser<T>(): T | null {

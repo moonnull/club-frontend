@@ -21,6 +21,14 @@ export default function Navbar() {
   }, [pathname])
 
   useEffect(() => {
+    function onAuthChanged() {
+      setUser(getStoredUser<User>())
+    }
+    window.addEventListener('auth-changed', onAuthChanged)
+    return () => window.removeEventListener('auth-changed', onAuthChanged)
+  }, [])
+
+  useEffect(() => {
     if (!user) {
       setUnread(0)
       return
@@ -190,9 +198,12 @@ export default function Navbar() {
 
       {user ? (
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <Link
+            href="/profile"
+            className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+          >
             {user.name}
-          </span>
+          </Link>
           {user.role === 'ADMIN' && (
             <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium">
               관리자
