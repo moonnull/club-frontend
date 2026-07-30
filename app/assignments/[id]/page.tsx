@@ -24,6 +24,7 @@ import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import { formatDeadline, isBeforeStart, isPastDeadline } from '@/lib/formatDeadline'
+import { toDownloadUrl } from '@/lib/downloadUrl'
 import type {
   Assignment,
   AssignmentQuestion,
@@ -184,9 +185,7 @@ function SubmissionCard({
         {submission.attachment_url && (
           <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-3">
             <a
-              href={submission.attachment_url}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={toDownloadUrl(submission.attachment_url, submission.attachment_filename ?? 'attachment')}
               className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               📎 {submission.attachment_filename}
@@ -219,9 +218,7 @@ function SubmissionCard({
                   <RichTextEditor content={c.content} editable={false} />
                   {c.attachment_url && (
                     <a
-                      href={c.attachment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={toDownloadUrl(c.attachment_url, c.attachment_filename ?? 'attachment')}
                       className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1"
                     >
                       📎 {c.attachment_filename}
@@ -635,9 +632,7 @@ export default function AssignmentDetailPage() {
               {assignment.files.map((f) => (
                 <li key={f.id}>
                   <a
-                    href={f.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={toDownloadUrl(f.url, f.filename)}
                     className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     📥 {f.filename}

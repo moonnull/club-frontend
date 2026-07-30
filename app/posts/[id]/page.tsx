@@ -6,6 +6,7 @@ import { listBoards } from '@/lib/api/boards'
 import { adoptComment as apiAdoptComment, createComment, deleteComment as apiDeleteComment, deletePost, getPost, listComments, listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import PostContent from '@/components/PostContent'
+import { toDownloadUrl } from '@/lib/downloadUrl'
 import type { Comment, Post, User } from '@/lib/types'
 
 export default function PostDetailPage() {
@@ -196,9 +197,7 @@ export default function PostDetailPage() {
                 {post.attachments.map((a) => (
                   <li key={a.id}>
                     <a
-                      href={a.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={toDownloadUrl(a.url, a.filename)}
                       className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
                       📎 {a.filename}

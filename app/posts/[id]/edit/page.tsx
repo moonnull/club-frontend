@@ -6,6 +6,8 @@ import { getPost, updatePost } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import ImageInsertButton from '@/components/ImageInsertButton'
+import RichTextEditor from '@/components/RichTextEditor'
+import { isRichTextContent } from '@/components/PostContent'
 import type { Post, UploadResult, User } from '@/lib/types'
 
 export default function EditPostPage() {
@@ -16,6 +18,7 @@ export default function EditPostPage() {
   const [boardMap, setBoardMap] = useState<Record<string, string>>({})
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [isLegacy, setIsLegacy] = useState(false)
   const [attachments, setAttachments] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -39,6 +42,7 @@ export default function EditPostPage() {
         setPost(p)
         setTitle(p.title)
         setContent(p.content)
+        setIsLegacy(!isRichTextContent(p.content))
         setAttachments(p.attachments ?? [])
       })
       .catch(() => setNotFound(true))
@@ -121,17 +125,28 @@ export default function EditPostPage() {
           required
           className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
         />
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="내용을 입력하세요"
-          required
-          className="w-full flex-1 min-h-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 resize-none focus:outline-none"
-        />
-        <div className="shrink-0">
-          <ImageInsertButton onUploaded={insertImage} />
-        </div>
+        {isLegacy ? (
+          <>
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="내용을 입력하세요"
+              required
+              className="w-full flex-1 min-h-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 resize-none focus:outline-none"
+            />
+            <div className="shrink-0">
+              <ImageInsertButton onUploaded={insertImage} />
+            </div>
+          </>
+        ) : (
+          <RichTextEditor
+            content={content}
+            onChange={setContent}
+            placeholder="'/'를 입력하여 작성을 시작해보세요."
+            fullHeight
+          />
+        )}
         <div className="shrink-0">
           <AttachmentPicker value={attachments} onChange={setAttachments} />
         </div>

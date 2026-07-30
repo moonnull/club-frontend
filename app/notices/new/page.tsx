@@ -1,10 +1,10 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { createPost } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import ImageInsertButton from '@/components/ImageInsertButton'
+import RichTextEditor from '@/components/RichTextEditor'
 import type { UploadResult, User } from '@/lib/types'
 
 export default function NewNoticePage() {
@@ -15,19 +15,6 @@ export default function NewNoticePage() {
   const [attachments, setAttachments] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  function insertImage(url: string) {
-    const snippet = `![image](${url})`
-    const el = textareaRef.current
-    if (!el) {
-      setContent((c) => `${c}\n${snippet}\n`)
-      return
-    }
-    const start = el.selectionStart ?? content.length
-    const end = el.selectionEnd ?? content.length
-    setContent(content.slice(0, start) + `\n${snippet}\n` + content.slice(end))
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -77,17 +64,12 @@ export default function NewNoticePage() {
           required
           className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
         />
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="내용을 입력하세요"
-          required
-          className="w-full flex-1 min-h-0 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+        <RichTextEditor
+          content={content}
+          onChange={setContent}
+          placeholder="'/'를 입력하여 작성을 시작해보세요."
+          fullHeight
         />
-        <div className="shrink-0">
-          <ImageInsertButton onUploaded={insertImage} />
-        </div>
         <div className="shrink-0">
           <AttachmentPicker value={attachments} onChange={setAttachments} />
         </div>
