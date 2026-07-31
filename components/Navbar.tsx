@@ -94,10 +94,10 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="h-14 sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex items-center px-6 gap-4">
+    <nav className="h-14 sticky top-0 z-50 border-b border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-[#111]/70 backdrop-blur-xl flex items-center px-6 gap-4">
       <Link
         href="/"
-        className="font-black text-lg tracking-tight text-gray-900 dark:text-white"
+        className="font-black text-lg tracking-tight gradient-text"
       >
         Chimera
       </Link>
@@ -154,7 +154,7 @@ export default function Navbar() {
           </button>
 
           {open && (
-            <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-lg">
+            <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto glass-panel rounded-xl shadow-2xl shadow-purple-500/10">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">알림</span>
                 {unread > 0 && (
@@ -226,7 +226,7 @@ export default function Navbar() {
           </Link>
           <Link
             href="/signup"
-            className="text-sm bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-3 py-1.5 rounded-lg font-medium hover:opacity-90 transition"
+            className="text-sm gradient-btn px-3 py-1.5 rounded-lg font-medium"
           >
             회원가입
           </Link>

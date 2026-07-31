@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { getMe, login } from '@/lib/api/auth'
 import { saveAuth } from '@/lib/session'
+import GradientBackground from '@/components/GradientBackground'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -36,11 +37,12 @@ export default function LoginPage() {
 
   return (
     <div className="fixed inset-0 bg-[#0d0d0d] flex items-center justify-center z-40">
+      <GradientBackground />
       <div className="w-full max-w-[380px] px-4">
-        <h1 className="text-center text-3xl font-black text-white mb-8 tracking-tight">
+        <h1 className="text-center text-4xl font-black gradient-text mb-8 tracking-tight">
           Chimera
         </h1>
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl shadow-purple-500/10">
           {pending && (
             <p className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-2 mb-4">
               회원가입이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.
@@ -96,7 +98,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-white text-gray-900 font-semibold text-sm px-5 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition"
+                className="gradient-btn font-semibold text-sm px-5 py-2 rounded-lg disabled:opacity-50"
               >
                 {loading ? '...' : '로그인'}
               </button>
