@@ -80,7 +80,7 @@ export default function NoticeDetailPage() {
         ← 목록으로
       </Link>
 
-      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl p-6">
+      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-sm p-6">
         <div className="flex items-start justify-between gap-3 mb-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-snug">{notice.title}</h1>
           {canManage && (
@@ -129,7 +129,7 @@ export default function NoticeDetailPage() {
       </div>
 
       {/* 댓글 */}
-      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl mt-4 p-6">
+      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-sm mt-4 p-6">
         <p className="text-sm font-semibold text-gray-900 dark:text-white mb-4">댓글 ({comments.length})</p>
 
         {comments.length === 0 ? (
@@ -167,14 +167,14 @@ export default function NoticeDetailPage() {
               onChange={(e) => setText(e.target.value)}
               placeholder="댓글을 입력하세요."
               rows={3}
-              className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-indigo-500 transition placeholder-gray-400 dark:placeholder-gray-600"
+              className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 transition placeholder-gray-400 dark:placeholder-gray-600"
             />
             <div className="flex justify-end mt-2">
               <button
                 type="submit"
-                className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition"
+                className="gradient-btn text-xs font-semibold px-4 py-1.5 rounded-lg"
               >
-                ✏️ 작성
+                작성
               </button>
             </div>
           </form>

@@ -24,7 +24,7 @@ export default function NoticesPage() {
         {user?.role === 'ADMIN' && (
           <button
             onClick={() => router.push('/notices/new')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            className="gradient-btn px-4 py-2 rounded-lg text-sm font-medium"
           >
             + 공지 작성
           </button>
@@ -36,7 +36,7 @@ export default function NoticesPage() {
       ) : notices.length === 0 ? (
         <p className="text-center text-gray-400 py-12 text-sm">등록된 공지사항이 없습니다.</p>
       ) : (
-        <div className="divide-y divide-gray-100 dark:divide-gray-800/60 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl overflow-hidden">
+        <div className="divide-y divide-gray-100 dark:divide-gray-800/60 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-sm overflow-hidden">
           {notices.map((n) => (
             <div
               key={n.id}

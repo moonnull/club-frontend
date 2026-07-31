@@ -46,7 +46,7 @@ export default function NewNoticePage() {
   return (
     <form onSubmit={submit} className="flex flex-col h-[calc(100vh-56px)]">
       <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">공지 작성</h1>
+        <h1 className="text-xl font-bold gradient-text">공지 작성</h1>
         <button
           type="button"
           onClick={() => router.push('/notices')}
@@ -78,7 +78,7 @@ export default function NewNoticePage() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition"
+            className="gradient-btn px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {loading ? '등록 중...' : '등록'}
           </button>
