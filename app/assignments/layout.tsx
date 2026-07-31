@@ -30,7 +30,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
           {user?.role === 'ADMIN' && (
             <button
               onClick={() => router.push('/assignments/new')}
-              className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition"
+              className="text-xs gradient-btn px-2.5 py-1 rounded-md font-medium"
             >
               + 등록
             </button>

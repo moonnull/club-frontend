@@ -17,11 +17,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* 다크모드 깜빡임 방지 — 렌더 전에 클래스 적용 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme'),d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&d))document.documentElement.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme'),d=window.matchMedia('(prefers-color-scheme: dark)').matches,isDark=t==='dark'||(!t&&d);if(isDark)document.documentElement.classList.add('dark');document.documentElement.style.colorScheme=isDark?'dark':'light'}catch(e){}})()`,
           }}
         />
       </head>
-      <body className={`${inter.className} bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-gray-100`}>
+      <body className={`${inter.className} min-h-screen bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-gray-100`}>
         <AuthGuard>{children}</AuthGuard>
       </body>
     </html>
