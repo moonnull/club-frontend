@@ -33,6 +33,7 @@ export interface Post {
   id: number
   title: string
   content: string
+  summary?: string | null
   board_type: string
   view_count: number
   is_closed: boolean
@@ -41,6 +42,7 @@ export interface Post {
   author: User
   comment_count?: number
   attachments?: Attachment[]
+  excerpt?: string
 }
 
 export interface Comment {

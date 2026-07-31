@@ -4,10 +4,14 @@ import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { createLowlight, common } from 'lowlight'
 import { useEffect, useRef } from 'react'
 import { uploadFile } from '@/lib/api/uploads'
 import { SlashCommand } from './slashCommandExtension'
 import styles from './RichTextEditor.module.css'
+
+const lowlight = createLowlight(common)
 
 export default function RichTextEditor({
   content,
@@ -29,7 +33,8 @@ export default function RichTextEditor({
     editable,
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({ codeBlock: false }),
+      CodeBlockLowlight.configure({ lowlight }),
       Image,
       Placeholder.configure({ placeholder }),
       ...(editable

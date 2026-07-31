@@ -71,6 +71,48 @@
   font-family: ui-monospace, monospace;
 }
 
+/* 코드블록 문법 강조 (lowlight/highlight.js 토큰) — 사이트 인디고/퍼플/핑크 팔레트에 맞춘 색상 */
+.content :global(.hljs-keyword),
+.content :global(.hljs-selector-tag),
+.content :global(.hljs-literal),
+.content :global(.hljs-type) {
+  color: #c4b5fd;
+}
+
+.content :global(.hljs-string),
+.content :global(.hljs-attr),
+.content :global(.hljs-regexp) {
+  color: #86efac;
+}
+
+.content :global(.hljs-comment),
+.content :global(.hljs-quote) {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.content :global(.hljs-number) {
+  color: #fbbf24;
+}
+
+.content :global(.hljs-title),
+.content :global(.hljs-title.function_),
+.content :global(.hljs-built_in) {
+  color: #f9a8d4;
+}
+
+.content :global(.hljs-name),
+.content :global(.hljs-tag),
+.content :global(.hljs-attribute) {
+  color: #67e8f9;
+}
+
+.content :global(.hljs-variable),
+.content :global(.hljs-params),
+.content :global(.hljs-meta) {
+  color: #93c5fd;
+}
+
 .content :global(.ProseMirror hr) {
   border: none;
   border-top: 1px solid #e5e7eb;

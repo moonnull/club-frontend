@@ -7,6 +7,9 @@ import { adoptComment as apiAdoptComment, createComment, deleteComment as apiDel
 import { getStoredUser } from '@/lib/session'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
+import GradientBackground from '@/components/GradientBackground'
+import InitialsAvatar from '@/components/InitialsAvatar'
+import PostHeroBanner from '@/components/PostHeroBanner'
 import type { Comment, Post, User } from '@/lib/types'
 
 export default function PostDetailPage() {
@@ -93,9 +96,10 @@ export default function PostDetailPage() {
   const boardLabel = boardMap[post.board_type] ?? post.board_type
 
   return (
-    <div className="flex h-[calc(100vh-56px)]">
+    <div className="relative flex h-[calc(100vh-56px)]">
+      <GradientBackground />
       {/* ── 왼쪽 사이드바: 같은 게시판 목록 ── */}
-      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col overflow-hidden">
+      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 glass-panel flex flex-col overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <Link
             href="/posts"
@@ -122,7 +126,7 @@ export default function PostDetailPage() {
               <p
                 className={`text-sm truncate leading-snug ${
                   p.id === post.id
-                    ? 'font-medium text-indigo-700 dark:text-indigo-300'
+                    ? 'font-medium gradient-text'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
@@ -137,20 +141,30 @@ export default function PostDetailPage() {
       </aside>
 
       {/* ── 가운데: 게시글 본문 ── */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#0d0d0d]">
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-6 py-8">
-          {/* 제목 영역 */}
-          <div className="flex items-start gap-3 justify-between mb-2">
-            <div className="flex-1">
-              <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400">
-                {boardLabel}
+          <PostHeroBanner boardName={boardLabel} boardKey={post.board_type} title={post.title} />
+
+          {/* 메타 + 수정/삭제 */}
+          <div className="flex items-center justify-between gap-3 glass-panel rounded-xl px-4 py-3 mt-4">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+              <InitialsAvatar name={post.author.name} size={28} />
+              <span className="font-medium text-gray-700 dark:text-gray-200">
+                {post.author.name}
               </span>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white mt-1 leading-snug">
-                {post.title}
-              </h1>
+              <span>·</span>
+              <span>{new Date(post.created_at).toLocaleString('ko')}</span>
+              <span>·</span>
+              <span>조회 {post.view_count}</span>
+              {post.is_closed && (
+                <>
+                  <span>·</span>
+                  <span className="text-green-500 font-medium">✓ 채택 완료</span>
+                </>
+              )}
             </div>
             {canManage && (
-              <div className="flex items-center gap-3 shrink-0 mt-1">
+              <div className="flex items-center gap-3 shrink-0">
                 <button
                   onClick={() => router.push(`/posts/${id}/edit`)}
                   className="text-xs text-gray-400 hover:text-indigo-500 transition"
@@ -167,25 +181,8 @@ export default function PostDetailPage() {
             )}
           </div>
 
-          {/* 메타 */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-500 mb-6 mt-2">
-            <span className="font-medium text-gray-600 dark:text-gray-300">
-              {post.author.name}
-            </span>
-            <span>·</span>
-            <span>{new Date(post.created_at).toLocaleString('ko')}</span>
-            <span>·</span>
-            <span>조회 {post.view_count}</span>
-            {post.is_closed && (
-              <>
-                <span>·</span>
-                <span className="text-green-500 font-medium">✓ 채택 완료</span>
-              </>
-            )}
-          </div>
-
           {/* 본문 */}
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+          <div className="pt-6">
             <PostContent content={post.content} />
           </div>
 
@@ -211,7 +208,7 @@ export default function PostDetailPage() {
       </div>
 
       {/* ── 오른쪽 패널: 댓글/제출 ── */}
-      <div className="w-80 shrink-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col overflow-hidden">
+      <div className="w-80 shrink-0 border-l border-gray-200 dark:border-gray-800 glass-panel flex flex-col overflow-hidden">
         {/* 탭 헤더 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <div className="flex gap-4">
@@ -254,6 +251,7 @@ export default function PostDetailPage() {
                         채택
                       </span>
                     )}
+                    <InitialsAvatar name={c.author.name} size={22} />
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                       {c.author.name}
                     </span>

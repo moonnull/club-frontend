@@ -1,25 +1,16 @@
 'use client'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { listBoards } from '@/lib/api/boards'
 import { listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
+import { boardColor } from '@/lib/boardColor'
+import GradientBackground from '@/components/GradientBackground'
+import InitialsAvatar from '@/components/InitialsAvatar'
 import type { BoardCategory, Post, User } from '@/lib/types'
 
-const BOARD_COLORS = [
-  { badge: 'bg-blue-500/15 text-blue-400', dot: 'bg-blue-400' },
-  { badge: 'bg-green-500/15 text-green-400', dot: 'bg-green-400' },
-  { badge: 'bg-purple-500/15 text-purple-400', dot: 'bg-purple-400' },
-  { badge: 'bg-amber-500/15 text-amber-400', dot: 'bg-amber-400' },
-  { badge: 'bg-pink-500/15 text-pink-400', dot: 'bg-pink-400' },
-  { badge: 'bg-cyan-500/15 text-cyan-400', dot: 'bg-cyan-400' },
-]
-
-function boardColor(key: string) {
-  let hash = 0
-  for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) % BOARD_COLORS.length
-  return BOARD_COLORS[hash]
-}
+const PAGE_SIZE = 20
 
 export default function PostsPage() {
   const router = useRouter()
@@ -32,6 +23,7 @@ export default function PostsPage() {
   const [boards, setBoards] = useState<BoardCategory[]>([])
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const user = getStoredUser<User>()
   const boardMap = Object.fromEntries(boards.map((b) => [b.key, b.name]))
@@ -46,154 +38,150 @@ export default function PostsPage() {
   }, [search])
 
   useEffect(() => {
-    setLoading(true)
-    listPosts({ board_type: boardType || undefined, search: debouncedSearch || undefined })
-      .then((all) => setPosts(all.filter((post) => post.board_type !== 'NOTICE')))
-      .finally(() => setLoading(false))
+    setPage(0)
   }, [boardType, debouncedSearch])
 
-  return (
-    <div className="flex h-[calc(100vh-56px)]">
-      {/* ── 왼쪽 사이드바 ── */}
-      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-            게시판
-          </p>
-        </div>
+  useEffect(() => {
+    setLoading(true)
+    listPosts({
+      board_type: boardType || undefined,
+      search: debouncedSearch || undefined,
+      limit: PAGE_SIZE,
+      skip: page * PAGE_SIZE,
+    })
+      .then((all) => setPosts(all.filter((post) => post.board_type !== 'NOTICE')))
+      .finally(() => setLoading(false))
+  }, [boardType, debouncedSearch, page])
 
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+  return (
+    <div className="relative max-w-3xl mx-auto px-4 py-10">
+      <GradientBackground />
+
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-black gradient-text tracking-tight">게시판</h1>
+        {user && (
+          <Link
+            href="/posts/new"
+            className="gradient-btn text-sm font-medium px-4 py-2 rounded-lg shrink-0"
+          >
+            + 글쓰기
+          </Link>
+        )}
+      </div>
+
+      {/* 카테고리 필터 pill */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        <button
+          onClick={() => setBoardType('')}
+          className={`shrink-0 text-sm px-4 py-1.5 rounded-full transition ${
+            boardType === ''
+              ? 'gradient-btn font-medium'
+              : 'border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+          }`}
+        >
+          전체
+        </button>
+        {boards.map((b) => (
           <button
-            onClick={() => setBoardType('')}
-            className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
-              boardType === ''
-                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
+            key={b.key}
+            onClick={() => setBoardType(b.key)}
+            className={`shrink-0 text-sm px-4 py-1.5 rounded-full transition ${
+              boardType === b.key
+                ? 'gradient-btn font-medium'
+                : 'border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
           >
-            <span className="text-base">📋</span>
-            <span>전체 게시글</span>
+            {b.name}
           </button>
-          {boards.map((b) => (
-            <button
-              key={b.key}
-              onClick={() => setBoardType(b.key)}
-              className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
-                boardType === b.key
-                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
-                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full shrink-0 ${boardColor(b.key).dot}`} />
-              <span>{b.name}</span>
-            </button>
-          ))}
-        </nav>
-
-        {user && (
-          <div className="p-3 border-t border-gray-100 dark:border-gray-800">
-            <button
-              onClick={() => router.push('/posts/new')}
-              className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg transition"
-            >
-              + 글쓰기
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* ── 메인 컨텐츠 ── */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-[#0d0d0d]">
-        {/* 헤더 */}
-        <div className="px-6 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex items-center gap-3 shrink-0">
-          <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
-            {boardMap[boardType] ?? '전체 게시글'}
-          </h1>
-          <div className="flex-1" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="검색..."
-            className="bg-gray-100 dark:bg-gray-800 border-0 text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 dark:placeholder-gray-600"
-          />
-        </div>
-
-        {/* 목록 */}
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-32 text-sm text-gray-400">
-              불러오는 중...
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-sm text-gray-400">
-              게시글이 없습니다.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111]">
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-400 w-16">
-                    구분
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">
-                    제목
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 w-20">
-                    작성자
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs font-medium text-gray-400 w-36">
-                    작성 시각
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {posts.map((p) => (
-                  <tr
-                    key={p.id}
-                    onClick={() => router.push(`/posts/${p.id}`)}
-                    className="bg-white dark:bg-[#111] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] cursor-pointer transition"
-                  >
-                    <td className="px-6 py-3.5">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded font-medium ${boardColor(p.board_type).badge}`}
-                      >
-                        {boardMap[p.board_type] ?? p.board_type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="font-medium text-gray-800 dark:text-gray-100">
-                        {p.title}
-                      </span>
-                      {p.is_closed && (
-                        <span className="ml-2 text-xs text-gray-400">[채택완료]</span>
-                      )}
-                      {(p.comment_count ?? 0) > 0 && (
-                        <span className="ml-2 text-xs text-indigo-500 dark:text-indigo-400">
-                          □{p.comment_count}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
-                      {p.author.name}
-                    </td>
-                    <td className="px-6 py-3.5 text-right text-xs text-gray-400">
-                      {new Date(p.created_at).toLocaleDateString('ko', {
-                        year: '2-digit',
-                        month: '2-digit',
-                        day: '2-digit',
-                      })}{' '}
-                      {new Date(p.created_at).toLocaleTimeString('ko', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        ))}
       </div>
+
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="검색..."
+        className="w-full sm:w-64 bg-gray-100 dark:bg-gray-800 border-0 text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 dark:placeholder-gray-600"
+      />
+
+      {/* 목록 */}
+      {loading ? (
+        <div className="flex items-center justify-center h-32 text-sm text-gray-400">
+          불러오는 중...
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="flex items-center justify-center h-32 text-sm text-gray-400">
+          게시글이 없습니다.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {posts.map((p) => (
+            <Link
+              key={p.id}
+              href={`/posts/${p.id}`}
+              className="group flex gap-4 p-4 glass-panel rounded-2xl hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-300/60 dark:hover:border-purple-400/30 transition"
+            >
+              <InitialsAvatar name={p.author.name} size={40} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-semibold text-gray-800 dark:text-gray-100 group-hover:gradient-text transition truncate">
+                    {p.title}
+                  </h2>
+                  {p.is_closed && (
+                    <span className="text-xs text-gray-400 shrink-0">[채택완료]</span>
+                  )}
+                </div>
+                {p.excerpt && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                    {p.excerpt}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mt-2">
+                  <span
+                    className={`px-2 py-0.5 rounded-full font-medium ${boardColor(p.board_type).badge}`}
+                  >
+                    {boardMap[p.board_type] ?? p.board_type}
+                  </span>
+                  <span>{p.author.name}</span>
+                  <span>·</span>
+                  <span>
+                    {new Date(p.created_at).toLocaleDateString('ko', {
+                      year: '2-digit',
+                      month: '2-digit',
+                      day: '2-digit',
+                    })}
+                  </span>
+                  {(p.comment_count ?? 0) > 0 && (
+                    <span className="text-indigo-500 dark:text-indigo-400">
+                      💬 {p.comment_count}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* 페이지네이션 */}
+      {!loading && (posts.length > 0 || page > 0) && (
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="text-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg px-3 py-1.5 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          >
+            이전
+          </button>
+          <span className="text-sm text-gray-400">{page + 1}</span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={posts.length < PAGE_SIZE}
+            className="text-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg px-3 py-1.5 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          >
+            다음
+          </button>
+        </div>
+      )}
     </div>
   )
 }

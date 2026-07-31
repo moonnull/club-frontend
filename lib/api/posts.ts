@@ -5,18 +5,21 @@ export interface ListPostsParams {
   board_type?: string
   search?: string
   limit?: number
+  skip?: number
 }
 
 export interface PostPayload {
   title: string
   content: string
   board_type: string
+  summary?: string
   attachments?: UploadResult[]
 }
 
 export interface PostUpdatePayload {
   title?: string
   content?: string
+  summary?: string
   attachments?: UploadResult[]
 }
 
@@ -25,6 +28,7 @@ function buildQuery(params: ListPostsParams): string {
   if (params.board_type) p.set('board_type', params.board_type)
   if (params.search) p.set('search', params.search)
   if (params.limit) p.set('limit', String(params.limit))
+  if (params.skip) p.set('skip', String(params.skip))
   return p.toString()
 }
 

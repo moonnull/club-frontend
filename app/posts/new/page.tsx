@@ -13,6 +13,7 @@ export default function NewPostPage() {
   const user = getStoredUser<User>()
   const [boards, setBoards] = useState<BoardCategory[]>([])
   const [title, setTitle] = useState('')
+  const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
   const [boardType, setBoardType] = useState('')
   const [attachments, setAttachments] = useState<UploadResult[]>([])
@@ -36,6 +37,7 @@ export default function NewPostPage() {
         title,
         content,
         board_type: boardType,
+        summary: summary.trim() || undefined,
         attachments,
       })
       router.push(`/posts/${post.id}`)
@@ -83,6 +85,13 @@ export default function NewPostPage() {
           placeholder="제목을 입력하세요"
           required
           className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+        />
+        <input
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+          placeholder="짧은 요약 (선택, 목록에 표시됩니다)"
+          maxLength={120}
+          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
         />
         <RichTextEditor
           content={content}
