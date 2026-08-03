@@ -2,12 +2,13 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { getPost, updatePost } from '@/lib/api/posts'
+import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import ImageInsertButton from '@/components/ImageInsertButton'
 import RichTextEditor from '@/components/RichTextEditor'
 import { isRichTextContent } from '@/components/PostContent'
-import type { Post, UploadResult, User } from '@/lib/types'
+import type { Post, Track, UploadResult, User } from '@/lib/types'
 
 export default function EditNoticePage() {
   const { id } = useParams<{ id: string }>()
@@ -16,12 +17,18 @@ export default function EditNoticePage() {
   const [notice, setNotice] = useState<Post | null>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [trackId, setTrackId] = useState('')
+  const [tracks, setTracks] = useState<Track[]>([])
   const [isLegacy, setIsLegacy] = useState(false)
   const [attachments, setAttachments] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    listTracks().then(setTracks)
+  }, [])
 
   useEffect(() => {
     setNotice(null)
@@ -34,6 +41,7 @@ export default function EditNoticePage() {
         setNotice(p)
         setTitle(p.title)
         setContent(p.content)
+        setTrackId(p.track ? String(p.track.id) : '')
         setIsLegacy(!isRichTextContent(p.content))
         setAttachments(p.attachments ?? [])
       })
@@ -57,7 +65,7 @@ export default function EditNoticePage() {
     setError('')
     setSaving(true)
     try {
-      await updatePost(id, { title, content, attachments })
+      await updatePost(id, { title, content, track_id: trackId ? Number(trackId) : null, attachments })
       router.push(`/notices/${id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -111,6 +119,18 @@ export default function EditNoticePage() {
           required
           className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
         />
+        <select
+          value={trackId}
+          onChange={(e) => setTrackId(e.target.value)}
+          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+        >
+          <option value="">전체 공지 (모든 회원에게 표시)</option>
+          {tracks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name} 트랙 전용
+            </option>
+          ))}
+        </select>
         {isLegacy ? (
           <>
             <textarea

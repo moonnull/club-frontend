@@ -81,6 +81,9 @@ export default function NoticeDetailPage() {
       </Link>
 
       <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-sm p-6">
+        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500 mb-2">
+          {notice.track ? `${notice.track.name} 트랙 전용` : '전체 공지'}
+        </span>
         <div className="flex items-start justify-between gap-3 mb-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-snug">{notice.title}</h1>
           {canManage && (

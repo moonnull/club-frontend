@@ -2,10 +2,11 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getAssignment, updateAssignment } from '@/lib/api/assignments'
+import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import type { Assignment, UploadResult, User } from '@/lib/types'
+import type { Assignment, Track, UploadResult, User } from '@/lib/types'
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso)
@@ -23,10 +24,16 @@ export default function EditAssignmentPage() {
   const [content, setContent] = useState('')
   const [startAt, setStartAt] = useState('')
   const [endAt, setEndAt] = useState('')
+  const [trackId, setTrackId] = useState('')
+  const [tracks, setTracks] = useState<Track[]>([])
   const [files, setFiles] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    listTracks().then(setTracks)
+  }, [])
 
   useEffect(() => {
     setAssignment(null)
@@ -43,6 +50,7 @@ export default function EditAssignmentPage() {
         setContent(a.content)
         setStartAt(toLocalInput(a.start_at))
         setEndAt(toLocalInput(a.end_at))
+        setTrackId(a.track ? String(a.track.id) : '')
         setFiles(a.files)
       })
       .catch(() => setNotFound(true))
@@ -58,6 +66,7 @@ export default function EditAssignmentPage() {
         content,
         start_at: new Date(startAt).toISOString(),
         end_at: new Date(endAt).toISOString(),
+        track_id: trackId ? Number(trackId) : null,
         files,
       })
       router.push(`/assignments/${id}`)
@@ -135,6 +144,19 @@ export default function EditAssignmentPage() {
             />
           </label>
         </div>
+
+        <select
+          value={trackId}
+          onChange={(e) => setTrackId(e.target.value)}
+          className="w-full glass-panel text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+        >
+          <option value="">전체 과제 (모든 회원에게 표시)</option>
+          {tracks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name} 트랙 전용
+            </option>
+          ))}
+        </select>
 
         <RichTextEditor content={content} onChange={setContent} fullHeight />
 

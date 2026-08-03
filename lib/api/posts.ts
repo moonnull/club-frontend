@@ -13,6 +13,7 @@ export interface PostPayload {
   content: string
   board_type: string
   summary?: string
+  track_id?: number | null
   attachments?: UploadResult[]
 }
 
@@ -20,6 +21,7 @@ export interface PostUpdatePayload {
   title?: string
   content?: string
   summary?: string
+  track_id?: number | null
   attachments?: UploadResult[]
 }
 

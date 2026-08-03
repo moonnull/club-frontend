@@ -44,7 +44,12 @@ export default function NoticesPage() {
               className="px-5 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#222] transition"
             >
               <div className="flex items-center justify-between">
-                <p className="font-medium text-gray-800 dark:text-gray-100">{n.title}</p>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500">
+                    {n.track ? `${n.track.name} 트랙` : '전체 공지'}
+                  </span>
+                  <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{n.title}</p>
+                </div>
                 <span className="text-xs text-gray-400 shrink-0">
                   {new Date(n.created_at).toLocaleDateString('ko')}
                 </span>

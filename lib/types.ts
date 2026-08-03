@@ -1,3 +1,10 @@
+export interface Track {
+  id: number
+  key: string
+  name: string
+  order: number
+}
+
 export interface User {
   id: number
   name: string
@@ -9,6 +16,7 @@ export interface User {
   is_active: boolean
   created_at: string
   has_security_question: boolean
+  track: Track | null
 }
 
 export interface BoardCategory {
@@ -44,6 +52,7 @@ export interface Post {
   comment_count?: number
   attachments?: Attachment[]
   excerpt?: string
+  track?: Track | null
 }
 
 export interface Comment {
@@ -66,6 +75,7 @@ export interface AssignmentListItem {
   end_at: string
   created_at: string
   author: User
+  track?: Track | null
 }
 
 export interface Assignment extends AssignmentListItem {

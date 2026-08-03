@@ -65,9 +65,16 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
                   >
                     {a.title}
                   </p>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-0.5">
-                    {closed ? '마감' : new Date(a.end_at).toLocaleDateString('ko')}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {a.track && (
+                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500">
+                        {a.track.name}
+                      </span>
+                    )}
+                    <p className="text-[11px] text-gray-400 dark:text-gray-600">
+                      {closed ? '마감' : new Date(a.end_at).toLocaleDateString('ko')}
+                    </p>
+                  </div>
                 </Link>
               )
             })

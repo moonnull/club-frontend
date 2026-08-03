@@ -16,6 +16,7 @@ export interface AssignmentPayload {
   content: string
   start_at: string
   end_at: string
+  track_id?: number | null
   files: UploadResult[]
 }
 
@@ -24,6 +25,7 @@ export interface AssignmentUpdatePayload {
   content?: string
   start_at?: string
   end_at?: string
+  track_id?: number | null
   files?: UploadResult[]
 }
 

@@ -1,20 +1,32 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { approveUser, deleteUser, listUsers, resetUserPassword, sendNotification, updateUserRole } from '@/lib/api/admin'
+import {
+  approveUser,
+  assignUserTrack,
+  deleteUser,
+  listUsers,
+  resetUserPassword,
+  sendNotification,
+  updateUserRole,
+} from '@/lib/api/admin'
 import { createBoard, deleteBoard, listBoards, updateBoard } from '@/lib/api/boards'
+import { createTrack, deleteTrack, listTracks, updateTrack } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
-import type { BoardCategory, User } from '@/lib/types'
+import type { BoardCategory, Track, User } from '@/lib/types'
 
 export default function AdminPage() {
   const router = useRouter()
   const me = getStoredUser<User>()
   const [users, setUsers] = useState<User[]>([])
   const [boards, setBoards] = useState<BoardCategory[]>([])
+  const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [boardError, setBoardError] = useState('')
+  const [trackError, setTrackError] = useState('')
   const [newBoard, setNewBoard] = useState({ key: '', name: '', admin_only: false })
+  const [newTrack, setNewTrack] = useState({ key: '', name: '' })
 
   useEffect(() => {
     if (!me) return
@@ -24,6 +36,7 @@ export default function AdminPage() {
     }
     load()
     loadBoards()
+    loadTracks()
   }, [])
 
   function load() {
@@ -36,6 +49,10 @@ export default function AdminPage() {
 
   function loadBoards() {
     listBoards().then(setBoards)
+  }
+
+  function loadTracks() {
+    listTracks().then(setTracks)
   }
 
   async function approve(userId: number) {
@@ -73,6 +90,15 @@ export default function AdminPage() {
     try {
       const { temporary_password } = await resetUserPassword(user.id)
       window.prompt(`${user.name} 님의 임시 비밀번호입니다. 복사해서 안전하게 전달해주세요.`, temporary_password)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  async function changeTrack(user: User, trackId: string) {
+    try {
+      await assignUserTrack(user.id, trackId ? Number(trackId) : null)
+      load()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
     }
@@ -126,6 +152,39 @@ export default function AdminPage() {
     try {
       await deleteBoard(board.id)
       loadBoards()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  async function addTrack(e: React.FormEvent) {
+    e.preventDefault()
+    setTrackError('')
+    try {
+      await createTrack(newTrack)
+      setNewTrack({ key: '', name: '' })
+      loadTracks()
+    } catch (err: unknown) {
+      setTrackError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  async function renameTrack(track: Track) {
+    const name = prompt('새 트랙 이름을 입력하세요.', track.name)
+    if (!name || name === track.name) return
+    try {
+      await updateTrack(track.id, { name })
+      loadTracks()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
+  }
+
+  async function removeTrack(track: Track) {
+    if (!confirm(`'${track.name}' 트랙을 삭제할까요?`)) return
+    try {
+      await deleteTrack(track.id)
+      loadTracks()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
     }
@@ -210,7 +269,19 @@ export default function AdminPage() {
                       {u.email} · {u.generation}기 · {u.part}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={u.track?.id ?? ''}
+                      onChange={(e) => changeTrack(u, e.target.value)}
+                      className="text-sm bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    >
+                      <option value="">트랙 미배정</option>
+                      {tracks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       onClick={() => toggleRole(u)}
                       disabled={u.id === me.id}
@@ -321,6 +392,67 @@ export default function AdminPage() {
                 추가
               </button>
               {boardError && <p className="w-full text-red-500 text-xs">{boardError}</p>}
+            </form>
+          </section>
+
+          <section className="mt-10">
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
+              트랙 관리 ({tracks.length})
+            </h2>
+            <div className="space-y-2 mb-4">
+              {tracks.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+                >
+                  <div>
+                    <p className="font-medium text-gray-800 dark:text-gray-100">
+                      {t.name} <span className="text-gray-400 font-normal">· {t.key}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => renameTrack(t)}
+                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
+                    >
+                      이름 수정
+                    </button>
+                    <button
+                      onClick={() => removeTrack(t)}
+                      className="text-sm text-gray-400 hover:text-red-500 px-3 py-1.5 transition"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form
+              onSubmit={addTrack}
+              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+            >
+              <input
+                value={newTrack.key}
+                onChange={(e) => setNewTrack((t) => ({ ...t, key: e.target.value.toUpperCase() }))}
+                placeholder="키 (예: REVERSING)"
+                required
+                className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <input
+                value={newTrack.name}
+                onChange={(e) => setNewTrack((t) => ({ ...t, name: e.target.value }))}
+                placeholder="이름 (예: 리버싱)"
+                required
+                className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <button
+                type="submit"
+                className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium transition"
+              >
+                추가
+              </button>
+              {trackError && <p className="w-full text-red-500 text-xs">{trackError}</p>}
             </form>
           </section>
         </>

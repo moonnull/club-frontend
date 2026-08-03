@@ -1,11 +1,12 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createAssignment } from '@/lib/api/assignments'
+import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import type { UploadResult, User } from '@/lib/types'
+import type { Track, UploadResult, User } from '@/lib/types'
 
 export default function NewAssignmentPage() {
   const router = useRouter()
@@ -14,9 +15,15 @@ export default function NewAssignmentPage() {
   const [content, setContent] = useState('')
   const [startAt, setStartAt] = useState('')
   const [endAt, setEndAt] = useState('')
+  const [trackId, setTrackId] = useState('')
+  const [tracks, setTracks] = useState<Track[]>([])
   const [files, setFiles] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    listTracks().then(setTracks)
+  }, [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,6 +35,7 @@ export default function NewAssignmentPage() {
         content,
         start_at: new Date(startAt).toISOString(),
         end_at: new Date(endAt).toISOString(),
+        track_id: trackId ? Number(trackId) : null,
         files,
       })
       router.push(`/assignments/${assignment.id}`)
@@ -90,6 +98,19 @@ export default function NewAssignmentPage() {
             />
           </label>
         </div>
+
+        <select
+          value={trackId}
+          onChange={(e) => setTrackId(e.target.value)}
+          className="w-full glass-panel text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+        >
+          <option value="">전체 과제 (모든 회원에게 표시)</option>
+          {tracks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name} 트랙 전용
+            </option>
+          ))}
+        </select>
 
         <RichTextEditor content={content} onChange={setContent} fullHeight />
 

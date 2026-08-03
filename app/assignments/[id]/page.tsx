@@ -601,6 +601,9 @@ export default function AssignmentDetailPage() {
     <div ref={containerRef} className="flex h-full">
       {/* ── 가운데: 과제 내용 ── */}
       <div style={{ width: `${splitPercent}%` }} className="min-w-0 overflow-y-auto px-8 py-6">
+        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500 mb-2">
+          {assignment.track ? `${assignment.track.name} 트랙 전용` : '전체 과제'}
+        </span>
         <div className="flex items-start justify-between gap-3 mb-1">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">{assignment.title}</h1>
           {canManage && (
