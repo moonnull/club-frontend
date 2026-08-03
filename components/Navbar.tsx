@@ -10,6 +10,7 @@ import {
   unreadCount,
 } from '@/lib/api/notifications'
 import { clearAuth, getStoredUser } from '@/lib/session'
+import { connectNotificationSocket } from '@/lib/ws'
 import type { Notification, User } from '@/lib/types'
 import ThemeToggle from './ThemeToggle'
 
@@ -39,14 +40,15 @@ export default function Navbar() {
       setUnread(0)
       return
     }
-    function refreshUnread() {
-      unreadCount()
-        .then((r) => setUnread(r.count))
-        .catch(() => {})
-    }
-    refreshUnread()
-    const interval = setInterval(refreshUnread, 60000)
-    return () => clearInterval(interval)
+    // 초기값은 REST로 한 번 받아오고, 이후 갱신은 WebSocket 실시간 push로 처리한다.
+    unreadCount()
+      .then((r) => setUnread(r.count))
+      .catch(() => {})
+
+    const token = localStorage.getItem('token')
+    if (!token) return
+    const close = connectNotificationSocket(token, setUnread)
+    return close
   }, [user?.id])
 
   useEffect(() => {
