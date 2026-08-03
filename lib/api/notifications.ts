@@ -16,3 +16,7 @@ export function markNotificationRead(id: number) {
 export function markAllNotificationsRead() {
   return api.post<void>('/api/notifications/read-all', {})
 }
+
+export function deleteNotification(id: number) {
+  return api.del(`/api/notifications/${id}`)
+}

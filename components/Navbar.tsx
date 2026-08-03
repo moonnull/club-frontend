@@ -2,7 +2,13 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { listNotifications, markAllNotificationsRead, markNotificationRead, unreadCount } from '@/lib/api/notifications'
+import {
+  deleteNotification,
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  unreadCount,
+} from '@/lib/api/notifications'
 import { clearAuth, getStoredUser } from '@/lib/session'
 import type { Notification, User } from '@/lib/types'
 import ThemeToggle from './ThemeToggle'
@@ -75,6 +81,16 @@ export default function Navbar() {
     }
     setOpen(false)
     if (n.link) router.push(n.link)
+  }
+
+  async function removeNotification(n: Notification) {
+    try {
+      await deleteNotification(n.id)
+      setNotifications((prev) => prev.filter((x) => x.id !== n.id))
+      if (!n.is_read) setUnread((c) => Math.max(0, c - 1))
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+    }
   }
 
   async function markAllRead() {
@@ -174,7 +190,7 @@ export default function Navbar() {
                     <li
                       key={n.id}
                       onClick={() => openNotification(n)}
-                      className={`px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#151515] transition ${
+                      className={`group px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#151515] transition ${
                         !n.is_read ? 'bg-indigo-50/50 dark:bg-indigo-500/5' : ''
                       }`}
                     >
@@ -186,6 +202,16 @@ export default function Navbar() {
                             {new Date(n.created_at).toLocaleString('ko')}
                           </p>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeNotification(n)
+                          }}
+                          className="shrink-0 hidden group-hover:inline text-gray-400 hover:text-red-500 transition"
+                          title="알림 삭제"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </li>
                   ))}
