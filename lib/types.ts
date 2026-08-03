@@ -8,6 +8,7 @@ export interface User {
   role: 'MEMBER' | 'ADMIN'
   is_active: boolean
   created_at: string
+  has_security_question: boolean
 }
 
 export interface BoardCategory {

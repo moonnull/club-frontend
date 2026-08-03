@@ -8,6 +8,8 @@ export interface SignupPayload {
   password: string
   generation: number
   part: string
+  security_question: string
+  security_answer: string
 }
 
 export function login(email: string, password: string) {
@@ -30,9 +32,19 @@ export function resetPassword(token: string, newPassword: string) {
   return api.post<{ message: string }>('/api/auth/reset-password', { token, new_password: newPassword })
 }
 
+export function getSecurityQuestion(email: string) {
+  return api.post<{ question: string | null }>('/api/auth/security-question', { email })
+}
+
+export function verifySecurityAnswer(email: string, answer: string) {
+  return api.post<{ reset_token: string }>('/api/auth/verify-security-answer', { email, answer })
+}
+
 export interface UpdateProfilePayload {
   name?: string
   password?: string
+  security_question?: string
+  security_answer?: string
 }
 
 export function updateProfile(data: UpdateProfilePayload) {

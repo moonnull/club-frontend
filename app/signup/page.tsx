@@ -15,6 +15,8 @@ export default function SignupPage() {
     password: '',
     generation: '',
     part: PARTS[0],
+    security_question: '',
+    security_answer: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -71,6 +73,11 @@ export default function SignupPage() {
             <option key={p}>{p}</option>
           ))}
         </select>
+        <p className="text-xs text-gray-400 pt-2">
+          비밀번호를 잊었을 때 본인 확인에 사용됩니다.
+        </p>
+        {input('security_question', '보안 질문 (예: 어릴 적 별명은?)')}
+        {input('security_answer', '보안 질문 답변')}
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"

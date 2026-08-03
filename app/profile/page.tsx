@@ -9,6 +9,8 @@ export default function ProfilePage() {
   const [name, setName] = useState(me?.name ?? '')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [securityQuestion, setSecurityQuestion] = useState('')
+  const [securityAnswer, setSecurityAnswer] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
@@ -24,10 +26,23 @@ export default function ProfilePage() {
       setError('새 비밀번호가 일치하지 않습니다.')
       return
     }
+    if ((securityQuestion && !securityAnswer) || (!securityQuestion && securityAnswer)) {
+      setError('보안 질문과 답변을 함께 입력해주세요.')
+      return
+    }
 
-    const payload: { name?: string; password?: string } = {}
+    const payload: {
+      name?: string
+      password?: string
+      security_question?: string
+      security_answer?: string
+    } = {}
     if (name.trim() && name.trim() !== me!.name) payload.name = name.trim()
     if (password) payload.password = password
+    if (securityQuestion && securityAnswer) {
+      payload.security_question = securityQuestion
+      payload.security_answer = securityAnswer
+    }
 
     if (Object.keys(payload).length === 0) {
       setError('변경할 내용이 없습니다.')
@@ -40,6 +55,8 @@ export default function ProfilePage() {
       saveAuth(localStorage.getItem('token') ?? '', updated)
       setPassword('')
       setConfirmPassword('')
+      setSecurityQuestion('')
+      setSecurityAnswer('')
       setSuccess('회원정보가 수정되었습니다.')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
@@ -96,6 +113,31 @@ export default function ProfilePage() {
               />
             </div>
           )}
+
+          <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 mt-4">
+              보안 질문 (비밀번호를 잊었을 때 본인 확인용)
+            </p>
+            <p className="text-xs text-gray-400 mb-3">
+              {me.has_security_question
+                ? '✓ 설정되어 있습니다. 변경하려면 아래에 새로 입력해주세요.'
+                : '설정되지 않았습니다. 비밀번호를 잊으면 복구할 수 없으니 아래에서 설정해주세요.'}
+            </p>
+            <div className="space-y-2">
+              <input
+                value={securityQuestion}
+                onChange={(e) => setSecurityQuestion(e.target.value)}
+                placeholder="새 보안 질문 (예: 어릴 적 별명은?)"
+                className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+              />
+              <input
+                value={securityAnswer}
+                onChange={(e) => setSecurityAnswer(e.target.value)}
+                placeholder="새 보안 질문 답변"
+                className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+              />
+            </div>
+          </div>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
           {success && <p className="text-green-500 text-sm">{success}</p>}
