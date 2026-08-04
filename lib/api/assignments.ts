@@ -72,6 +72,10 @@ export function getSubmission(assignmentId: number | string, submissionId: numbe
   return api.get<Submission>(`/api/assignments/${assignmentId}/submissions/${submissionId}`)
 }
 
+export function deleteSubmission(assignmentId: number | string, submissionId: number | string) {
+  return api.del(`/api/assignments/${assignmentId}/submissions/${submissionId}`)
+}
+
 export function gradeSubmission(
   assignmentId: number | string,
   submissionId: number | string,

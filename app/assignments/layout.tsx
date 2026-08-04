@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { listAssignments } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
 import { isPastDeadline } from '@/lib/formatDeadline'
+import { realtimeHub } from '@/lib/ws'
 import type { AssignmentListItem, User } from '@/lib/types'
 
 export default function AssignmentsLayout({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
   const user = getStoredUser<User>()
   const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
   const [loading, setLoading] = useState(true)
+  const currentId = pathname.match(/^\/assignments\/(\d+)/)?.[1]
 
   useEffect(() => {
     listAssignments()
@@ -20,7 +22,19 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
       .finally(() => setLoading(false))
   }, [pathname])
 
-  const currentId = pathname.match(/^\/assignments\/(\d+)/)?.[1]
+  useEffect(() => {
+    const offCreated = realtimeHub.on('assignment_created', (data) => {
+      setAssignments((prev) => [data.assignment, ...prev])
+    })
+    const offDeleted = realtimeHub.on('assignment_deleted', (data) => {
+      setAssignments((prev) => prev.filter((a) => a.id !== data.assignment_id))
+      if (String(data.assignment_id) === currentId) router.push('/assignments')
+    })
+    return () => {
+      offCreated()
+      offDeleted()
+    }
+  }, [currentId])
 
   return (
     <div className="flex h-[calc(100vh-56px)]">

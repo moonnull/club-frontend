@@ -6,6 +6,7 @@ import { listBoards } from '@/lib/api/boards'
 import { listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import { boardColor } from '@/lib/boardColor'
+import { realtimeHub } from '@/lib/ws'
 import GradientBackground from '@/components/GradientBackground'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import type { BoardCategory, Post, User } from '@/lib/types'
@@ -51,6 +52,23 @@ export default function PostsPage() {
     })
       .then((all) => setPosts(all.filter((post) => post.board_type !== 'NOTICE')))
       .finally(() => setLoading(false))
+  }, [boardType, debouncedSearch, page])
+
+  useEffect(() => {
+    const offCreated = realtimeHub.on('post_created', (data) => {
+      if (data.board_type === 'NOTICE') return
+      if (page !== 0 || debouncedSearch) return
+      if (boardType && data.board_type !== boardType) return
+      setPosts((prev) => [data.post, ...prev])
+    })
+    const offDeleted = realtimeHub.on('post_deleted', (data) => {
+      if (data.board_type === 'NOTICE') return
+      setPosts((prev) => prev.filter((p) => p.id !== data.post_id))
+    })
+    return () => {
+      offCreated()
+      offDeleted()
+    }
   }, [boardType, debouncedSearch, page])
 
   return (

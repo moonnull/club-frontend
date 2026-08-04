@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { listBoards } from '@/lib/api/boards'
 import { adoptComment as apiAdoptComment, createComment, deleteComment as apiDeleteComment, deletePost, getPost, listComments, listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
+import { realtimeHub } from '@/lib/ws'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import GradientBackground from '@/components/GradientBackground'
@@ -48,6 +49,27 @@ export default function PostDetailPage() {
       setBoardMap(Object.fromEntries(boards.map((b) => [b.key, b.name])))
     )
   }, [])
+
+  useEffect(() => {
+    const offCommentCreated = realtimeHub.on('comment_created', (data) => {
+      if (String(data.post_id) !== String(id)) return
+      setComments((prev) => [...prev, data.comment])
+    })
+    const offCommentDeleted = realtimeHub.on('comment_deleted', (data) => {
+      if (String(data.post_id) !== String(id)) return
+      setComments((prev) => prev.filter((c) => c.id !== data.comment_id))
+    })
+    const offPostDeleted = realtimeHub.on('post_deleted', (data) => {
+      if (String(data.post_id) !== String(id)) return
+      alert('다른 사용자가 이 게시글을 삭제했습니다.')
+      router.push('/posts')
+    })
+    return () => {
+      offCommentCreated()
+      offCommentDeleted()
+      offPostDeleted()
+    }
+  }, [id])
 
   async function handleDelete() {
     if (!confirm('게시글을 삭제하시겠습니까?')) return

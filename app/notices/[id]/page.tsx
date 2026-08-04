@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createComment, deleteComment as apiDeleteComment, deletePost, getPost, listComments } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
+import { realtimeHub } from '@/lib/ws'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import type { Comment, Post, User } from '@/lib/types'
@@ -33,6 +34,27 @@ export default function NoticeDetailPage() {
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
+  }, [id])
+
+  useEffect(() => {
+    const offCommentCreated = realtimeHub.on('comment_created', (data) => {
+      if (String(data.post_id) !== String(id)) return
+      setComments((prev) => [...prev, data.comment])
+    })
+    const offCommentDeleted = realtimeHub.on('comment_deleted', (data) => {
+      if (String(data.post_id) !== String(id)) return
+      setComments((prev) => prev.filter((c) => c.id !== data.comment_id))
+    })
+    const offPostDeleted = realtimeHub.on('post_deleted', (data) => {
+      if (String(data.post_id) !== String(id)) return
+      alert('다른 사용자가 이 공지사항을 삭제했습니다.')
+      router.push('/notices')
+    })
+    return () => {
+      offCommentCreated()
+      offCommentDeleted()
+      offPostDeleted()
+    }
   }, [id])
 
   async function handleDelete() {

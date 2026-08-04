@@ -8,6 +8,7 @@ import {
   deleteAssignment,
   deleteQuestion as apiDeleteQuestion,
   deleteQuestionComment,
+  deleteSubmission as apiDeleteSubmission,
   deleteSubmissionComment,
   getAssignment,
   getMySubmission,
@@ -21,6 +22,7 @@ import {
   submitAssignment,
 } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
+import { realtimeHub } from '@/lib/ws'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import { formatDeadline, isBeforeStart, isPastDeadline } from '@/lib/formatDeadline'
@@ -51,6 +53,7 @@ function SubmissionCard({
   onBack,
   onEdit,
   onChanged,
+  onDeleted,
 }: {
   assignmentId: string
   submissionId: number
@@ -58,6 +61,7 @@ function SubmissionCard({
   onBack?: () => void
   onEdit?: () => void
   onChanged?: () => void
+  onDeleted?: () => void
 }) {
   const [submission, setSubmission] = useState<Submission | null>(null)
   const [comments, setComments] = useState<SubmissionComment[]>([])
@@ -74,6 +78,18 @@ function SubmissionCard({
         setComments(c)
       })
       .finally(() => setLoading(false))
+  }, [assignmentId, submissionId])
+
+  useEffect(() => {
+    return realtimeHub.on('assignment_submission_event', (data) => {
+      if (String(data.assignment_id) !== String(assignmentId) || data.submission_id !== submissionId) return
+      Promise.all([getSubmission(assignmentId, submissionId), listSubmissionComments(assignmentId, submissionId)])
+        .then(([s, c]) => {
+          setSubmission(s)
+          setComments(c)
+        })
+        .catch(() => onDeleted?.())
+    })
   }, [assignmentId, submissionId])
 
   async function setGrade(grade: Grade | null) {
@@ -105,12 +121,20 @@ function SubmissionCard({
     onChanged?.()
   }
 
+  async function deleteThisSubmission() {
+    if (!confirm('제출물을 삭제하시겠습니까?')) return
+    await apiDeleteSubmission(assignmentId, submissionId)
+    onDeleted?.()
+  }
+
   if (loading || !submission) {
     return <div className="text-sm text-gray-400 text-center py-10">불러오는 중...</div>
   }
 
   const canDeleteComment = (c: SubmissionComment) =>
     !!currentUser && (currentUser.id === c.author.id || currentUser.role === 'ADMIN')
+  const canDeleteSubmission =
+    !!currentUser && (currentUser.id === submission.user.id || currentUser.role === 'ADMIN')
 
   return (
     <div className="flex flex-col h-full">
@@ -135,6 +159,14 @@ function SubmissionCard({
           {onEdit && (
             <button onClick={onEdit} className="ml-auto text-xs text-gray-400 hover:text-indigo-500 transition">
               수정
+            </button>
+          )}
+          {canDeleteSubmission && (
+            <button
+              onClick={deleteThisSubmission}
+              className={`text-xs text-gray-400 hover:text-red-500 transition ${onEdit ? '' : 'ml-auto'}`}
+            >
+              삭제
             </button>
           )}
         </div>
@@ -284,6 +316,18 @@ function QuestionCard({
         setComments(c)
       })
       .finally(() => setLoading(false))
+  }, [questionId])
+
+  useEffect(() => {
+    return realtimeHub.on('assignment_question_event', (data) => {
+      if (data.question_id !== questionId) return
+      Promise.all([getQuestion(questionId), listQuestionComments(questionId)])
+        .then(([q, c]) => {
+          setQuestion(q)
+          setComments(c)
+        })
+        .catch(() => onDeleted?.())
+    })
   }, [questionId])
 
   async function postReply() {
@@ -511,6 +555,21 @@ export default function AssignmentDetailPage() {
     return listQuestions(id).then(setQuestions)
   }
 
+  useEffect(() => {
+    const offSub = realtimeHub.on('assignment_submission_event', (data) => {
+      if (String(data.assignment_id) !== String(id)) return
+      refreshSubmissions()
+    })
+    const offQuestion = realtimeHub.on('assignment_question_event', (data) => {
+      if (String(data.assignment_id) !== String(id)) return
+      refreshQuestions()
+    })
+    return () => {
+      offSub()
+      offQuestion()
+    }
+  }, [id])
+
   async function handleDelete() {
     if (!confirm('과제를 삭제하시겠습니까? 제출된 내용도 함께 삭제됩니다.')) return
     await deleteAssignment(id)
@@ -701,6 +760,13 @@ export default function AssignmentDetailPage() {
                 currentUser={user}
                 onEdit={!closed ? () => setEditingOwn(true) : undefined}
                 onChanged={refreshSubmissions}
+                onDeleted={async () => {
+                  setMySubmission(null)
+                  setTitle(user ? `${assignment.title}_${user.name} 제출` : '')
+                  setContent('')
+                  setFile(null)
+                  await refreshSubmissions()
+                }}
               />
             ) : (
               <div className="flex flex-col h-full gap-3">
@@ -769,6 +835,10 @@ export default function AssignmentDetailPage() {
                 currentUser={user}
                 onBack={() => setListDetailId(null)}
                 onChanged={refreshSubmissions}
+                onDeleted={async () => {
+                  setListDetailId(null)
+                  await refreshSubmissions()
+                }}
               />
             ) : submissions.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">{submissionsEmptyMessage}</p>

@@ -10,7 +10,7 @@ import {
   unreadCount,
 } from '@/lib/api/notifications'
 import { clearAuth, getStoredUser } from '@/lib/session'
-import { connectNotificationSocket } from '@/lib/ws'
+import { realtimeHub } from '@/lib/ws'
 import type { Notification, User } from '@/lib/types'
 import ThemeToggle from './ThemeToggle'
 
@@ -47,8 +47,12 @@ export default function Navbar() {
 
     const token = localStorage.getItem('token')
     if (!token) return
-    const close = connectNotificationSocket(token, setUnread)
-    return close
+    realtimeHub.connect(token)
+    const off = realtimeHub.on('unread_count', (data) => setUnread(data.unread_count))
+    return () => {
+      off()
+      realtimeHub.disconnect()
+    }
   }, [user?.id])
 
   useEffect(() => {

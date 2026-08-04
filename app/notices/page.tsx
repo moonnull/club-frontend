@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
+import { realtimeHub } from '@/lib/ws'
 import type { Post, User } from '@/lib/types'
 
 export default function NoticesPage() {
@@ -15,6 +16,21 @@ export default function NoticesPage() {
     listPosts({ board_type: 'NOTICE' })
       .then(setNotices)
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const offCreated = realtimeHub.on('post_created', (data) => {
+      if (data.board_type !== 'NOTICE') return
+      setNotices((prev) => [data.post, ...prev])
+    })
+    const offDeleted = realtimeHub.on('post_deleted', (data) => {
+      if (data.board_type !== 'NOTICE') return
+      setNotices((prev) => prev.filter((n) => n.id !== data.post_id))
+    })
+    return () => {
+      offCreated()
+      offDeleted()
+    }
   }, [])
 
   return (
