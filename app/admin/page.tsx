@@ -12,12 +12,13 @@ import {
 } from '@/lib/api/admin'
 import { createBoard, deleteBoard, listBoards, updateBoard } from '@/lib/api/boards'
 import { createTrack, deleteTrack, listTracks, updateTrack } from '@/lib/api/tracks'
-import { getStoredUser } from '@/lib/session'
+import { getMe } from '@/lib/api/auth'
+import { getStoredUser, saveAuth } from '@/lib/session'
 import type { BoardCategory, Track, User } from '@/lib/types'
 
 export default function AdminPage() {
   const router = useRouter()
-  const me = getStoredUser<User>()
+  const [me, setMe] = useState<User | null>(() => getStoredUser<User>())
   const [users, setUsers] = useState<User[]>([])
   const [boards, setBoards] = useState<BoardCategory[]>([])
   const [tracks, setTracks] = useState<Track[]>([])
@@ -29,14 +30,25 @@ export default function AdminPage() {
   const [newTrack, setNewTrack] = useState({ key: '', name: '' })
 
   useEffect(() => {
-    if (!me) return
-    if (me.role !== 'ADMIN') {
-      router.replace('/')
+    if (!getStoredUser<User>()) {
+      router.replace('/login')
       return
     }
-    load()
-    loadBoards()
-    loadTracks()
+    // 캐시된 role이 오래된 값일 수 있어(예: 방금 관리자로 지정된 경우) 서버에서
+    // 최신 정보를 다시 가져와 확인한다.
+    getMe()
+      .then((fresh) => {
+        saveAuth(localStorage.getItem('token') ?? '', fresh)
+        setMe(fresh)
+        if (fresh.role !== 'ADMIN') {
+          router.replace('/')
+          return
+        }
+        load()
+        loadBoards()
+        loadTracks()
+      })
+      .catch(() => router.replace('/login'))
   }, [])
 
   function load() {
