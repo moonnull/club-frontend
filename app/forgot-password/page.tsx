@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="fixed inset-0 bg-[#0d0d0d] flex items-center justify-center z-40">
       <div className="w-full max-w-[380px] px-4">
-        <h1 className="text-center text-3xl font-black text-white mb-8 tracking-tight">
+        <h1 className="text-center text-3xl font-black gradient-text mb-8 tracking-tight">
           Chimera
         </h1>
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
