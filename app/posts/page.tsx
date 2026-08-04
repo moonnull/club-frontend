@@ -76,7 +76,7 @@ export default function PostsPage() {
       <GradientBackground />
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black gradient-text tracking-tight">게시판</h1>
+        <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">게시판</h1>
         {user && (
           <Link
             href="/posts/new"

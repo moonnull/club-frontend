@@ -155,7 +155,7 @@ export default function CalendarPage() {
     <div className="relative max-w-5xl mx-auto px-4 py-8">
       <GradientBackground />
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black gradient-text tracking-tight">캘린더</h1>
+        <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">캘린더</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={prevMonth}
