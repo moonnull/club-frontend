@@ -4,16 +4,16 @@
 
 @layer utilities {
   .gradient-text {
-    @apply bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent;
+    @apply text-indigo-600 dark:text-indigo-400;
   }
   .glass-panel {
     @apply bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10;
   }
   .gradient-btn {
-    @apply bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white transition;
-    box-shadow: 0 0 24px -6px rgba(168, 85, 247, 0.55);
+    @apply bg-indigo-600 hover:bg-indigo-700 text-white transition;
+    box-shadow: 0 0 24px -6px rgba(99, 102, 241, 0.55);
   }
   .gradient-btn:hover {
-    box-shadow: 0 0 32px -4px rgba(168, 85, 247, 0.75);
+    box-shadow: 0 0 32px -4px rgba(99, 102, 241, 0.75);
   }
 }

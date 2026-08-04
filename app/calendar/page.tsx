@@ -227,7 +227,7 @@ export default function CalendarPage() {
                     <span
                       className={`text-xs font-medium inline-flex items-center justify-center w-6 h-6 rounded-full ${
                         isToday
-                          ? 'bg-gradient-to-br from-indigo-500 to-purple-500 text-white'
+                          ? 'bg-indigo-600 text-white'
                           : 'text-gray-500 dark:text-gray-400'
                       }`}
                     >
