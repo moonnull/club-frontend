@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-white text-gray-900 font-semibold text-sm px-5 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition"
+                  className="gradient-btn font-semibold text-sm px-5 py-2 rounded-lg disabled:opacity-50"
                 >
                   {loading ? '...' : '다음'}
                 </button>
@@ -125,7 +125,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-white text-gray-900 font-semibold text-sm px-5 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition"
+                  className="gradient-btn font-semibold text-sm px-5 py-2 rounded-lg disabled:opacity-50"
                 >
                   {loading ? '...' : '확인'}
                 </button>
