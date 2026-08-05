@@ -5,6 +5,7 @@ import { listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
+import GradientBackground from '@/components/GradientBackground'
 import type { Post, User } from '@/lib/types'
 
 export default function NoticesPage() {
@@ -35,7 +36,9 @@ export default function NoticesPage() {
   }, [])
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="relative max-w-3xl mx-auto px-4 py-8">
+      <GradientBackground />
+
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">공지사항</h1>
         {user?.role === 'ADMIN' && (
