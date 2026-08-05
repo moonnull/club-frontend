@@ -10,7 +10,7 @@ import {
   unreadCount,
 } from '@/lib/api/notifications'
 import { clearAuth, getStoredUser } from '@/lib/session'
-import { realtimeHub } from '@/lib/ws'
+import { realtimeHub, type ConnectionStatus } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
 import type { Notification, User } from '@/lib/types'
 import ThemeToggle from './ThemeToggle'
@@ -20,6 +20,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [unread, setUnread] = useState(0)
+  const [wsStatus, setWsStatus] = useState<ConnectionStatus>('connecting')
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
   const bellRef = useRef<HTMLDivElement>(null)
@@ -50,8 +51,10 @@ export default function Navbar() {
     if (!token) return
     realtimeHub.connect(token)
     const off = realtimeHub.on('unread_count', (data) => setUnread(data.unread_count))
+    const offStatus = realtimeHub.onStatusChange(setWsStatus)
     return () => {
       off()
+      offStatus()
       realtimeHub.disconnect()
     }
   }, [user?.id])
@@ -166,6 +169,7 @@ export default function Navbar() {
         <div ref={bellRef} className="relative">
           <button
             onClick={toggleDropdown}
+            title={wsStatus === 'disconnected' ? '실시간 알림 연결이 끊겼습니다. 새로고침해보세요.' : undefined}
             className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
           >
             <span className="text-gray-500 dark:text-gray-400 text-base">🔔</span>
@@ -173,6 +177,9 @@ export default function Navbar() {
               <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-medium leading-none">
                 {unread > 9 ? '9+' : unread}
               </span>
+            )}
+            {wsStatus === 'disconnected' && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 ring-2 ring-white dark:ring-[#111]" />
             )}
           </button>
 
