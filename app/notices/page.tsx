@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
+import { toDate } from '@/lib/formatDeadline'
 import type { Post, User } from '@/lib/types'
 
 export default function NoticesPage() {
@@ -67,7 +68,7 @@ export default function NoticesPage() {
                   <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{n.title}</p>
                 </div>
                 <span className="text-xs text-gray-400 shrink-0">
-                  {new Date(n.created_at).toLocaleDateString('ko')}
+                  {toDate(n.created_at).toLocaleDateString('ko')}
                 </span>
               </div>
               <p className="text-xs text-gray-400 mt-1">{n.author.name}</p>

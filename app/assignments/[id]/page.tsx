@@ -25,7 +25,7 @@ import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import { formatDeadline, isBeforeStart, isPastDeadline } from '@/lib/formatDeadline'
+import { formatDeadline, isBeforeStart, isPastDeadline, toDate } from '@/lib/formatDeadline'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import type {
   Assignment,
@@ -174,7 +174,7 @@ function SubmissionCard({
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
           <span className="font-medium text-gray-600 dark:text-gray-300">{submission.user.name}</span>
           <span>·</span>
-          <span>{new Date(submission.submitted_at ?? submission.created_at).toLocaleString('ko')}</span>
+          <span>{toDate(submission.submitted_at ?? submission.created_at).toLocaleString('ko')}</span>
         </div>
 
         {currentUser?.role === 'ADMIN' && (
@@ -236,7 +236,7 @@ function SubmissionCard({
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{c.author.name}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString('ko')}</span>
+                      <span className="text-xs text-gray-400">{toDate(c.created_at).toLocaleString('ko')}</span>
                       {canDeleteComment(c) && (
                         <button
                           onClick={() => deleteComment(c.id)}
@@ -397,7 +397,7 @@ function QuestionCard({
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
           <span className="font-medium text-gray-600 dark:text-gray-300">{question.author.name}</span>
           <span>·</span>
-          <span>{new Date(question.created_at).toLocaleString('ko')}</span>
+          <span>{toDate(question.created_at).toLocaleString('ko')}</span>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
           <RichTextEditor content={question.content} editable={false} />
@@ -421,7 +421,7 @@ function QuestionCard({
                       )}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString('ko')}</span>
+                      <span className="text-xs text-gray-400">{toDate(c.created_at).toLocaleString('ko')}</span>
                       {canDeleteComment(c) && (
                         <button
                           onClick={() => deleteReply(c.id)}
@@ -866,7 +866,7 @@ export default function AssignmentDetailPage() {
                     </div>
                     <div className="flex items-center justify-between text-xs text-gray-400">
                       <span>{s.user.name}</span>
-                      <span>{new Date(s.submitted_at ?? s.created_at).toLocaleString('ko')}</span>
+                      <span>{toDate(s.submitted_at ?? s.created_at).toLocaleString('ko')}</span>
                     </div>
                   </li>
                 ))}
@@ -958,7 +958,7 @@ export default function AssignmentDetailPage() {
                         </div>
                         <div className="flex items-center justify-between text-xs text-gray-400">
                           <span>{q.author.name}</span>
-                          <span>{new Date(q.created_at).toLocaleString('ko')}</span>
+                          <span>{toDate(q.created_at).toLocaleString('ko')}</span>
                         </div>
                       </li>
                     ))}

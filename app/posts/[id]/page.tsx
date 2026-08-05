@@ -8,6 +8,7 @@ import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
+import { toDate } from '@/lib/formatDeadline'
 import GradientBackground from '@/components/GradientBackground'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import PostHeroBanner from '@/components/PostHeroBanner'
@@ -155,7 +156,7 @@ export default function PostDetailPage() {
                 {p.title}
               </p>
               <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-0.5">
-                {new Date(p.created_at).toLocaleDateString('ko')}
+                {toDate(p.created_at).toLocaleDateString('ko')}
               </p>
             </Link>
           ))}
@@ -175,7 +176,7 @@ export default function PostDetailPage() {
                 {post.author.name}
               </span>
               <span>·</span>
-              <span>{new Date(post.created_at).toLocaleString('ko')}</span>
+              <span>{toDate(post.created_at).toLocaleString('ko')}</span>
               <span>·</span>
               <span>조회 {post.view_count}</span>
               {post.is_closed && (
@@ -305,7 +306,7 @@ export default function PostDetailPage() {
                   {c.content}
                 </p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-1.5">
-                  {new Date(c.created_at).toLocaleString('ko')}
+                  {toDate(c.created_at).toLocaleString('ko')}
                 </p>
               </div>
             ))

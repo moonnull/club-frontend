@@ -7,6 +7,7 @@ import { listPosts } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import { boardColor } from '@/lib/boardColor'
 import { realtimeHub } from '@/lib/ws'
+import { toDate } from '@/lib/formatDeadline'
 import GradientBackground from '@/components/GradientBackground'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import type { BoardCategory, Post, User } from '@/lib/types'
@@ -162,7 +163,7 @@ export default function PostsPage() {
                   <span>{p.author.name}</span>
                   <span>·</span>
                   <span>
-                    {new Date(p.created_at).toLocaleDateString('ko', {
+                    {toDate(p.created_at).toLocaleDateString('ko', {
                       year: '2-digit',
                       month: '2-digit',
                       day: '2-digit',

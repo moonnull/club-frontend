@@ -6,10 +6,11 @@ import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
+import { toDate } from '@/lib/formatDeadline'
 import type { Assignment, Track, UploadResult, User } from '@/lib/types'
 
 function toLocalInput(iso: string): string {
-  const d = new Date(iso)
+  const d = toDate(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }

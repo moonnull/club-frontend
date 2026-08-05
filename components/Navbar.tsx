@@ -11,6 +11,7 @@ import {
 } from '@/lib/api/notifications'
 import { clearAuth, getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
+import { toDate } from '@/lib/formatDeadline'
 import type { Notification, User } from '@/lib/types'
 import ThemeToggle from './ThemeToggle'
 
@@ -205,7 +206,7 @@ export default function Navbar() {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-gray-700 dark:text-gray-200 break-words">{n.message}</p>
                           <p className="text-xs text-gray-400 mt-1">
-                            {new Date(n.created_at).toLocaleString('ko')}
+                            {toDate(n.created_at).toLocaleString('ko')}
                           </p>
                         </div>
                         <button

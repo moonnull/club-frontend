@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { listAssignments } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
-import { isPastDeadline } from '@/lib/formatDeadline'
+import { isPastDeadline, toDate } from '@/lib/formatDeadline'
 import { realtimeHub } from '@/lib/ws'
 import type { AssignmentListItem, User } from '@/lib/types'
 
@@ -86,7 +86,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
                       </span>
                     )}
                     <p className="text-[11px] text-gray-400 dark:text-gray-600">
-                      {closed ? '마감' : new Date(a.end_at).toLocaleDateString('ko')}
+                      {closed ? '마감' : toDate(a.end_at).toLocaleDateString('ko')}
                     </p>
                   </div>
                 </Link>

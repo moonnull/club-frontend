@@ -7,6 +7,7 @@ import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
+import { toDate } from '@/lib/formatDeadline'
 import type { Comment, Post, User } from '@/lib/types'
 
 export default function NoticeDetailPage() {
@@ -125,7 +126,7 @@ export default function NoticeDetailPage() {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-500 mb-6">
           <span className="font-medium text-gray-600 dark:text-gray-300">{notice.author.name}</span>
           <span>·</span>
-          <span>{new Date(notice.created_at).toLocaleString('ko')}</span>
+          <span>{toDate(notice.created_at).toLocaleString('ko')}</span>
           <span>·</span>
           <span>조회 {notice.view_count}</span>
         </div>
@@ -166,7 +167,7 @@ export default function NoticeDetailPage() {
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{c.author.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString('ko')}</span>
+                    <span className="text-xs text-gray-400">{toDate(c.created_at).toLocaleString('ko')}</span>
                     {user && (user.id === c.author.id || user.role === 'ADMIN') && (
                       <button
                         onClick={() => deleteComment(c.id)}
