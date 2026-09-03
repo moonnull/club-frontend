@@ -32,24 +32,24 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#0d0d0d] flex items-center justify-center z-40">
+    <div className="fixed inset-0 auth-screen flex items-center justify-center z-40">
       <div className="w-full max-w-[380px] px-4">
-        <h1 className="text-center text-3xl font-black gradient-text mb-8 tracking-tight">
+        <h1 className="text-center text-3xl font-black brand-text mb-8 tracking-tight">
           Chimera
         </h1>
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
-          <h2 className="text-white text-sm font-semibold mb-4">새 비밀번호 설정</h2>
+        <div className="panel rounded-xl p-6">
+          <h2 className="text-gray-900 dark:text-white text-sm font-semibold mb-4">새 비밀번호 설정</h2>
           {!token ? (
-            <p className="text-sm text-red-400">
+            <p className="text-sm text-red-500 dark:text-red-400">
               유효하지 않은 링크입니다.{' '}
-              <Link href="/forgot-password" className="underline hover:text-red-300">
+              <Link href="/forgot-password" className="underline hover:text-red-600 dark:hover:text-red-300">
                 다시 요청하기
               </Link>
             </p>
           ) : (
             <form onSubmit={submit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   새 비밀번호
                 </label>
                 <input
@@ -57,12 +57,12 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={4}
-                  className="w-full bg-[#252525] border border-[#333] text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-gray-600"
+                  className="w-full field"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   새 비밀번호 확인
                 </label>
                 <input
@@ -70,18 +70,18 @@ export default function ResetPasswordPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   minLength={4}
-                  className="w-full bg-[#252525] border border-[#333] text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-gray-600"
+                  className="w-full field"
                   required
                 />
               </div>
 
-              {error && <p className="text-red-400 text-xs">{error}</p>}
+              {error && <p className="text-red-500 dark:text-red-400 text-xs">{error}</p>}
 
               <div className="flex items-center justify-end pt-1">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="gradient-btn font-semibold text-sm px-5 py-2 rounded-lg disabled:opacity-50"
+                  className="btn-primary font-semibold text-sm px-5 py-2 rounded-lg disabled:opacity-50"
                 >
                   {loading ? '...' : '비밀번호 변경'}
                 </button>

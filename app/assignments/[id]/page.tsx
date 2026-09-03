@@ -39,6 +39,8 @@ import type {
   UploadResult,
   User,
 } from '@/lib/types'
+import { errorMessage, useToast } from '@/components/Toast'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 const GRADE_LABEL: Record<string, string> = { PASS: '합격', FAIL: '불합격' }
 const GRADE_COLOR: Record<string, string> = {
@@ -63,6 +65,8 @@ function SubmissionCard({
   onChanged?: () => void
   onDeleted?: () => void
 }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const [submission, setSubmission] = useState<Submission | null>(null)
   const [comments, setComments] = useState<SubmissionComment[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,21 +112,31 @@ function SubmissionCard({
       setCommentFile(null)
       onChanged?.()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     } finally {
       setPosting(false)
     }
   }
 
   async function deleteComment(commentId: number) {
-    if (!confirm('댓글을 삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: '댓글을 삭제하시겠습니까?',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await deleteSubmissionComment(commentId)
     setComments((prev) => prev.filter((c) => c.id !== commentId))
     onChanged?.()
   }
 
   async function deleteThisSubmission() {
-    if (!confirm('제출물을 삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: '제출물을 삭제하시겠습니까?',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await apiDeleteSubmission(assignmentId, submissionId)
     onDeleted?.()
   }
@@ -157,7 +171,7 @@ function SubmissionCard({
             </span>
           )}
           {onEdit && (
-            <button onClick={onEdit} className="ml-auto text-xs text-gray-400 hover:text-indigo-500 transition">
+            <button onClick={onEdit} className="ml-auto text-xs text-gray-400 hover:text-gray-500 transition">
               수정
             </button>
           )}
@@ -218,7 +232,7 @@ function SubmissionCard({
           <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-3">
             <a
               href={toDownloadUrl(submission.attachment_url, submission.attachment_filename ?? 'attachment')}
-              className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
             >
               📎 {submission.attachment_filename}
             </a>
@@ -251,7 +265,7 @@ function SubmissionCard({
                   {c.attachment_url && (
                     <a
                       href={toDownloadUrl(c.attachment_url, c.attachment_filename ?? 'attachment')}
-                      className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1"
+                      className="inline-flex items-center gap-1.5 text-xs text-gray-900 dark:text-white hover:underline mt-1"
                     >
                       📎 {c.attachment_filename}
                     </a>
@@ -302,6 +316,8 @@ function QuestionCard({
   onChanged?: () => void
   onDeleted?: () => void
 }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const [question, setQuestion] = useState<AssignmentQuestion | null>(null)
   const [comments, setComments] = useState<AssignmentQuestionComment[]>([])
   const [loading, setLoading] = useState(true)
@@ -340,14 +356,19 @@ function QuestionCard({
       setQuestion((prev) => (prev ? { ...prev, is_answered: true } : prev))
       onChanged?.()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     } finally {
       setPosting(false)
     }
   }
 
   async function deleteReply(commentId: number) {
-    if (!confirm('답변을 삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: '답변을 삭제하시겠습니까?',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await deleteQuestionComment(commentId)
     setComments((prev) => {
       const next = prev.filter((c) => c.id !== commentId)
@@ -358,7 +379,12 @@ function QuestionCard({
   }
 
   async function deleteThisQuestion() {
-    if (!confirm('질문을 삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: '질문을 삭제하시겠습니까?',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await apiDeleteQuestion(questionId)
     onDeleted?.()
   }
@@ -383,7 +409,7 @@ function QuestionCard({
 
         <div className="flex items-center gap-2 mb-2">
           {question.is_answered && (
-            <span className="text-xs bg-indigo-500/15 text-indigo-500 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs badge-neutral px-1.5 py-0.5 rounded font-medium">
               답변됨
             </span>
           )}
@@ -415,7 +441,7 @@ function QuestionCard({
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
                       {c.author.name}
                       {c.author.role === 'ADMIN' && (
-                        <span className="text-[10px] bg-indigo-500/15 text-indigo-500 px-1 py-0.5 rounded font-medium">
+                        <span className="text-[10px] badge-neutral px-1 py-0.5 rounded font-medium">
                           멘토
                         </span>
                       )}
@@ -449,7 +475,7 @@ function QuestionCard({
             onChange={(e) => setReplyContent(e.target.value)}
             placeholder="답변을 작성해보세요."
             rows={3}
-            className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-indigo-500 transition placeholder-gray-400 dark:placeholder-gray-600"
+            className="w-full bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-500 transition placeholder-gray-400 dark:placeholder-gray-600"
           />
           <div className="flex justify-end">
             <button
@@ -467,6 +493,8 @@ function QuestionCard({
 }
 
 export default function AssignmentDetailPage() {
+  const toast = useToast()
+  const confirm = useConfirm()
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const user = getStoredUser<User>()
@@ -571,7 +599,12 @@ export default function AssignmentDetailPage() {
   }, [id])
 
   async function handleDelete() {
-    if (!confirm('과제를 삭제하시겠습니까? 제출된 내용도 함께 삭제됩니다.')) return
+    const confirmed = await confirm({
+      message: '과제를 삭제하시겠습니까?\n제출된 내용도 함께 삭제됩니다.',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await deleteAssignment(id)
     router.push('/assignments')
   }
@@ -590,7 +623,7 @@ export default function AssignmentDetailPage() {
       if (isFinal) {
         setEditingOwn(false)
       } else {
-        alert('임시 저장되었습니다.')
+        toast('임시 저장되었습니다.')
       }
       await refreshSubmissions()
     } catch (err: unknown) {
@@ -611,7 +644,7 @@ export default function AssignmentDetailPage() {
       setSelectedQuestionId(q.id)
       setQuestionView('detail')
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     } finally {
       setPostingQuestion(false)
     }
@@ -660,7 +693,7 @@ export default function AssignmentDetailPage() {
     <div ref={containerRef} className="flex h-full">
       {/* ── 가운데: 과제 내용 ── */}
       <div style={{ width: `${splitPercent}%` }} className="min-w-0 overflow-y-auto px-8 py-6">
-        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500 mb-2">
+        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium badge-neutral mb-2">
           {assignment.track ? `${assignment.track.name} 트랙 전용` : '전체 과제'}
         </span>
         <div className="flex items-start justify-between gap-3 mb-1">
@@ -669,7 +702,7 @@ export default function AssignmentDetailPage() {
             <div className="flex items-center gap-3 shrink-0">
               <button
                 onClick={() => router.push(`/assignments/${id}/edit`)}
-                className="text-xs text-gray-400 hover:text-indigo-500 transition"
+                className="text-xs text-gray-400 hover:text-gray-500 transition"
               >
                 수정
               </button>
@@ -680,7 +713,7 @@ export default function AssignmentDetailPage() {
           )}
         </div>
         <p className="text-xs text-gray-400 mb-1">{assignment.author.name}</p>
-        <p className={`text-xs font-medium mb-5 ${closed ? 'text-gray-400' : 'text-indigo-500 dark:text-indigo-400'}`}>
+        <p className={`text-xs font-medium mb-5 ${closed ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
           제출 기한 {formatDeadline(assignment.start_at, assignment.end_at)}
           {closed && ' · 마감됨'}
         </p>
@@ -695,7 +728,7 @@ export default function AssignmentDetailPage() {
                 <li key={f.id}>
                   <a
                     href={toDownloadUrl(f.url, f.filename)}
-                    className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
                   >
                     📥 {f.filename}
                   </a>
@@ -709,9 +742,12 @@ export default function AssignmentDetailPage() {
       {/* ── 드래그 구분선 ── */}
       <div
         onMouseDown={onDividerMouseDown}
-        className="w-1.5 shrink-0 cursor-col-resize bg-gray-100 dark:bg-[#1a1a1a] hover:bg-indigo-200 dark:hover:bg-indigo-500/30 flex items-center justify-center transition"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="좌우 영역 너비 조절"
+        className="w-1.5 shrink-0 cursor-col-resize bg-gray-100 dark:bg-[#0f0f0f] hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center transition"
       >
-        <span className="text-gray-400 text-xs select-none">⋮</span>
+        <span aria-hidden="true" className="text-gray-400 text-xs select-none">⋮</span>
       </div>
 
       {/* ── 오른쪽: 제출 작성 / 제출 현황 / 질문 (전부 이 패널 안에서만 전환) ── */}
@@ -721,7 +757,7 @@ export default function AssignmentDetailPage() {
             onClick={() => setRightTab('write')}
             className={`text-sm font-medium transition ${
               rightTab === 'write'
-                ? 'text-gray-900 dark:text-white border-b-2 border-indigo-500 pb-0.5'
+                ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-0.5'
                 : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
@@ -731,7 +767,7 @@ export default function AssignmentDetailPage() {
             onClick={() => setRightTab('list')}
             className={`text-sm font-medium transition ${
               rightTab === 'list'
-                ? 'text-gray-900 dark:text-white border-b-2 border-indigo-500 pb-0.5'
+                ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-0.5'
                 : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
@@ -741,7 +777,7 @@ export default function AssignmentDetailPage() {
             onClick={() => setRightTab('qna')}
             className={`text-sm font-medium transition ${
               rightTab === 'qna'
-                ? 'text-gray-900 dark:text-white border-b-2 border-indigo-500 pb-0.5'
+                ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-0.5'
                 : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
@@ -792,7 +828,7 @@ export default function AssignmentDetailPage() {
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="제목을 입력하세요"
                       disabled={!canSubmit}
-                      className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0 disabled:opacity-60"
+                      className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0 disabled:opacity-60"
                     />
                     <RichTextEditor
                       content={content}
@@ -816,7 +852,7 @@ export default function AssignmentDetailPage() {
                           <button
                             onClick={() => save(true)}
                             disabled={saving}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                            className="btn-primary px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50"
                           >
                             최종 제출
                           </button>
@@ -848,7 +884,7 @@ export default function AssignmentDetailPage() {
                   <li
                     key={s.id}
                     onClick={() => setListDetailId(s.id)}
-                    className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition -mx-4 px-4"
+                    className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04] transition -mx-4 px-4"
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-medium">
@@ -861,7 +897,7 @@ export default function AssignmentDetailPage() {
                       )}
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{s.title}</span>
                       {s.comment_count > 0 && (
-                        <span className="text-xs text-indigo-500 dark:text-indigo-400 shrink-0">💬{s.comment_count}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">💬{s.comment_count}</span>
                       )}
                     </div>
                     <div className="flex items-center justify-between text-xs text-gray-400">
@@ -899,7 +935,7 @@ export default function AssignmentDetailPage() {
                 value={questionTitle}
                 onChange={(e) => setQuestionTitle(e.target.value)}
                 placeholder="질문 제목을 입력하세요"
-                className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+                className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
               />
               <RichTextEditor
                 content={questionContent}
@@ -943,17 +979,17 @@ export default function AssignmentDetailPage() {
                           setSelectedQuestionId(q.id)
                           setQuestionView('detail')
                         }}
-                        className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition -mx-1 px-1"
+                        className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04] transition -mx-1 px-1"
                       >
                         <div className="flex items-center gap-2 mb-1">
                           {q.is_answered && (
-                            <span className="text-xs bg-indigo-500/15 text-indigo-500 px-1.5 py-0.5 rounded font-medium shrink-0">
+                            <span className="text-xs badge-neutral px-1.5 py-0.5 rounded font-medium shrink-0">
                               답변됨
                             </span>
                           )}
                           <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{q.title}</span>
                           {q.comment_count > 0 && (
-                            <span className="text-xs text-indigo-500 dark:text-indigo-400 shrink-0">💬{q.comment_count}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">💬{q.comment_count}</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-xs text-gray-400">

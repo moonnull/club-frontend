@@ -6,7 +6,6 @@ import { createPost } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import RichTextEditor from '@/components/RichTextEditor'
-import GradientBackground from '@/components/GradientBackground'
 import type { BoardCategory, UploadResult, User } from '@/lib/types'
 
 export default function NewPostPage() {
@@ -59,13 +58,12 @@ export default function NewPostPage() {
 
   return (
     <form onSubmit={submit} className="relative flex flex-col h-[calc(100vh-56px)]">
-      <GradientBackground />
       <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200/60 dark:border-gray-800/60 shrink-0">
-        <h1 className="text-xl font-bold gradient-text">글쓰기</h1>
+        <h1 className="text-xl font-bold brand-text">글쓰기</h1>
         <button
           type="button"
           onClick={() => router.push('/posts')}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white glass-panel rounded-lg px-3 py-1.5 transition"
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white panel rounded-lg px-3 py-1.5 transition"
         >
           ✕ 작성 취소
         </button>
@@ -75,7 +73,7 @@ export default function NewPostPage() {
         <select
           value={boardType}
           onChange={(e) => setBoardType(e.target.value)}
-          className="w-full glass-panel text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full panel text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         >
           {boards.map((b) => (
             <option key={b.key} value={b.key}>{b.name}</option>
@@ -86,14 +84,14 @@ export default function NewPostPage() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="제목을 입력하세요"
           required
-          className="w-full glass-panel text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full panel text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         />
         <input
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder="짧은 요약 (선택, 목록에 표시됩니다)"
           maxLength={120}
-          className="w-full glass-panel text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full panel text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         />
         <RichTextEditor
           content={content}
@@ -109,7 +107,7 @@ export default function NewPostPage() {
           <button
             type="submit"
             disabled={loading || !boardType}
-            className="gradient-btn px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {loading ? '등록 중...' : '등록'}
           </button>

@@ -69,7 +69,7 @@ export default function ProfilePage() {
     <div className="max-w-md mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">회원정보 수정</h1>
 
-      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl p-6">
+      <div className="bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl p-6">
         <div className="mb-5 pb-5 border-b border-gray-100 dark:border-gray-800 text-sm text-gray-400 space-y-1">
           <p>이메일: {me.email}</p>
           <p>학번: {me.student_id}</p>
@@ -85,7 +85,7 @@ export default function ProfilePage() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+              className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
             />
           </div>
           <div>
@@ -97,7 +97,7 @@ export default function ProfilePage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               minLength={4}
-              className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+              className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
             />
           </div>
           {password && (
@@ -110,7 +110,7 @@ export default function ProfilePage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 minLength={4}
-                className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
               />
             </div>
           )}
@@ -129,13 +129,13 @@ export default function ProfilePage() {
                 value={securityQuestion}
                 onChange={(e) => setSecurityQuestion(e.target.value)}
                 placeholder="새 보안 질문 (예: 어릴 적 별명은?)"
-                className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
               />
               <input
                 value={securityAnswer}
                 onChange={(e) => setSecurityAnswer(e.target.value)}
                 placeholder="새 보안 질문 답변"
-                className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
               />
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition"
+              className="btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition"
             >
               {loading ? '저장 중...' : '저장'}
             </button>

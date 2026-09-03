@@ -32,7 +32,7 @@ export default function AssignmentsIndexPage() {
       {user?.role === 'ADMIN' && (
         <button
           onClick={() => router.push('/assignments/new')}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          className="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           + 과제 등록
         </button>

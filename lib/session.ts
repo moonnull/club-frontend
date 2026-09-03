@@ -13,5 +13,13 @@ export function clearAuth() {
 export function getStoredUser<T>(): T | null {
   if (typeof window === 'undefined') return null
   const raw = localStorage.getItem('user')
-  return raw ? (JSON.parse(raw) as T) : null
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    // 저장된 값이 깨졌으면 앱 전체가 죽는 대신 로그아웃 상태로 취급한다.
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    return null
+  }
 }

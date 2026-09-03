@@ -16,13 +16,17 @@ export default function ThemeToggle() {
     localStorage.setItem('theme', next ? 'dark' : 'light')
   }
 
+  const label = dark ? '라이트 모드로 전환' : '다크 모드로 전환'
+
   return (
     <button
       onClick={toggle}
       className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-      title="테마 전환"
+      title={label}
+      aria-label={label}
+      aria-pressed={dark}
     >
-      <span className="text-base">{dark ? '☀️' : '🌙'}</span>
+      <span aria-hidden="true" className="text-base">{dark ? '☀️' : '🌙'}</span>
     </button>
   )
 }

@@ -58,12 +58,13 @@ export default function AttachmentPicker({
           {value.map((f, i) => (
             <li
               key={i}
-              className="flex items-center justify-between text-sm bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-lg px-3 py-1.5"
+              className="flex items-center justify-between text-sm bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-1.5"
             >
               <span className="truncate text-gray-700 dark:text-gray-300">{f.filename}</span>
               <button
                 type="button"
                 onClick={() => onChange(value.filter((_, idx) => idx !== i))}
+                aria-label={`첨부파일 '${f.filename}' 제거`}
                 className="text-gray-400 hover:text-red-500 shrink-0 ml-2"
               >
                 ✕

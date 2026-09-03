@@ -54,7 +54,7 @@ export default function NewNoticePage() {
   return (
     <form onSubmit={submit} className="flex flex-col h-[calc(100vh-56px)]">
       <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-        <h1 className="text-xl font-bold gradient-text">공지 작성</h1>
+        <h1 className="text-xl font-bold brand-text">공지 작성</h1>
         <button
           type="button"
           onClick={() => router.push('/notices')}
@@ -70,12 +70,12 @@ export default function NewNoticePage() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="제목을 입력하세요"
           required
-          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         />
         <select
           value={trackId}
           onChange={(e) => setTrackId(e.target.value)}
-          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         >
           <option value="">전체 공지 (모든 회원에게 표시)</option>
           {tracks.map((t) => (
@@ -98,7 +98,7 @@ export default function NewNoticePage() {
           <button
             type="submit"
             disabled={loading}
-            className="gradient-btn px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {loading ? '등록 중...' : '등록'}
           </button>

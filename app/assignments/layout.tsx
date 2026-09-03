@@ -38,13 +38,13 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex h-[calc(100vh-56px)]">
-      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col overflow-hidden">
+      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">과제</p>
           {user?.role === 'ADMIN' && (
             <button
               onClick={() => router.push('/assignments/new')}
-              className="text-xs gradient-btn px-2.5 py-1 rounded-md font-medium"
+              className="text-xs btn-primary px-2.5 py-1 rounded-md font-medium"
             >
               + 등록
             </button>
@@ -66,14 +66,14 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
                   href={`/assignments/${a.id}`}
                   className={`block px-4 py-2.5 border-l-2 transition ${
                     active
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+                      ? 'border-gray-900 dark:border-white bg-gray-100 dark:bg-white/[0.06]'
                       : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800/40'
                   }`}
                 >
                   <p
                     className={`text-sm truncate leading-snug ${
                       active
-                        ? 'font-medium text-indigo-700 dark:text-indigo-300'
+                        ? 'font-medium text-gray-900 dark:text-white'
                         : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
@@ -81,11 +81,11 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {a.track && (
-                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500">
+                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium badge-neutral">
                         {a.track.name}
                       </span>
                     )}
-                    <p className="text-[11px] text-gray-400 dark:text-gray-600">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">
                       {closed ? '마감' : toDate(a.end_at).toLocaleDateString('ko')}
                     </p>
                   </div>

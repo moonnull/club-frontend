@@ -8,7 +8,6 @@ import { getStoredUser } from '@/lib/session'
 import { boardColor } from '@/lib/boardColor'
 import { realtimeHub } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
-import GradientBackground from '@/components/GradientBackground'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import type { BoardCategory, Post, User } from '@/lib/types'
 
@@ -74,14 +73,13 @@ export default function PostsPage() {
 
   return (
     <div className="relative max-w-3xl mx-auto px-4 py-10">
-      <GradientBackground />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">게시판</h1>
         {user && (
           <Link
             href="/posts/new"
-            className="gradient-btn text-sm font-medium px-4 py-2 rounded-lg shrink-0"
+            className="btn-primary text-sm font-medium px-4 py-2 rounded-lg shrink-0"
           >
             + 글쓰기
           </Link>
@@ -94,7 +92,7 @@ export default function PostsPage() {
           onClick={() => setBoardType('')}
           className={`shrink-0 text-sm px-4 py-1.5 rounded-full transition ${
             boardType === ''
-              ? 'gradient-btn font-medium'
+              ? 'btn-primary font-medium'
               : 'border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
           }`}
         >
@@ -106,7 +104,7 @@ export default function PostsPage() {
             onClick={() => setBoardType(b.key)}
             className={`shrink-0 text-sm px-4 py-1.5 rounded-full transition ${
               boardType === b.key
-                ? 'gradient-btn font-medium'
+                ? 'btn-primary font-medium'
                 : 'border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
           >
@@ -119,7 +117,7 @@ export default function PostsPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="검색..."
-        className="w-full sm:w-64 bg-gray-100 dark:bg-gray-800 border-0 text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 dark:placeholder-gray-600"
+        className="w-full sm:w-64 bg-gray-100 dark:bg-gray-800 border-0 text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-gray-400 placeholder-gray-400 dark:placeholder-gray-600"
       />
 
       {/* 목록 */}
@@ -137,12 +135,12 @@ export default function PostsPage() {
             <Link
               key={p.id}
               href={`/posts/${p.id}`}
-              className="group flex gap-4 p-4 glass-panel rounded-2xl hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-300/60 dark:hover:border-purple-400/30 transition"
+              className="group flex gap-4 p-4 panel rounded-2xl hover:border-gray-400 dark:hover:border-gray-600 transition"
             >
               <InitialsAvatar name={p.author.name} size={40} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-gray-800 dark:text-gray-100 group-hover:gradient-text transition truncate">
+                  <h2 className="font-semibold text-gray-800 dark:text-gray-100 group-hover:underline transition truncate">
                     {p.title}
                   </h2>
                   {p.is_closed && (
@@ -170,7 +168,7 @@ export default function PostsPage() {
                     })}
                   </span>
                   {(p.comment_count ?? 0) > 0 && (
-                    <span className="text-indigo-500 dark:text-indigo-400">
+                    <span className="text-gray-500 dark:text-gray-400">
                       💬 {p.comment_count}
                     </span>
                   )}

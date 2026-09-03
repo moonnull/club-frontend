@@ -1,14 +1,16 @@
-const BOARD_COLORS = [
-  { badge: 'bg-blue-500/15 text-blue-400', dot: 'bg-blue-400', gradient: 'from-blue-500 to-indigo-600' },
-  { badge: 'bg-green-500/15 text-green-400', dot: 'bg-green-400', gradient: 'from-green-500 to-emerald-600' },
-  { badge: 'bg-purple-500/15 text-purple-400', dot: 'bg-purple-400', gradient: 'from-purple-500 to-fuchsia-600' },
-  { badge: 'bg-amber-500/15 text-amber-400', dot: 'bg-amber-400', gradient: 'from-amber-500 to-orange-600' },
-  { badge: 'bg-pink-500/15 text-pink-400', dot: 'bg-pink-400', gradient: 'from-pink-500 to-rose-600' },
-  { badge: 'bg-cyan-500/15 text-cyan-400', dot: 'bg-cyan-400', gradient: 'from-cyan-500 to-blue-600' },
+// 사이트 전체가 무채색 팔레트이므로 게시판별 구분도 명도로만 표현한다.
+type BoardStyle = { badge: string; dot: string; gradient: string }
+
+const BADGE = 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300'
+
+const BOARD_STYLES: BoardStyle[] = [
+  { badge: BADGE, dot: 'bg-gray-900 dark:bg-white', gradient: 'from-gray-900 to-black' },
+  { badge: BADGE, dot: 'bg-gray-500', gradient: 'from-gray-700 to-gray-900' },
+  { badge: BADGE, dot: 'bg-gray-400', gradient: 'from-gray-600 to-gray-800' },
 ]
 
-export function boardColor(key: string) {
+export function boardColor(key: string): BoardStyle {
   let hash = 0
-  for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) % BOARD_COLORS.length
-  return BOARD_COLORS[hash]
+  for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) % BOARD_STYLES.length
+  return BOARD_STYLES[hash]
 }

@@ -16,7 +16,7 @@ export default function GlobalError({
 
   return (
     <html lang="ko">
-      <body className="bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-gray-100">
+      <body className="bg-white dark:bg-black text-gray-900 dark:text-gray-100">
         <div className="flex flex-col items-center justify-center h-screen px-4 text-center">
           <p className="text-4xl mb-3">⚠️</p>
           <h1 className="text-lg font-bold mb-1">문제가 발생했습니다</h1>
@@ -25,7 +25,7 @@ export default function GlobalError({
           </p>
           <button
             onClick={reset}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            className="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             다시 시도
           </button>

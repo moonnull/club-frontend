@@ -10,8 +10,9 @@ import {
 } from '@/lib/api/calendar'
 import { getStoredUser } from '@/lib/session'
 import { toDate } from '@/lib/formatDeadline'
-import GradientBackground from '@/components/GradientBackground'
 import type { AssignmentListItem, CalendarItem, User } from '@/lib/types'
+import { errorMessage, useToast } from '@/components/Toast'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const MAX_DOTS = 4
@@ -38,6 +39,8 @@ function formatSelectedDate(key: string): string {
 }
 
 export default function CalendarPage() {
+  const toast = useToast()
+  const confirm = useConfirm()
   const user = getStoredUser<User>()
   const today = new Date()
   const todayKey = dateKeyFromDate(today)
@@ -116,7 +119,7 @@ export default function CalendarPage() {
       setItems((prev) => [...prev, item])
       setNewTitle('')
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     } finally {
       setCreating(false)
     }
@@ -127,17 +130,22 @@ export default function CalendarPage() {
       const updated = await updateCalendarItem(item.id, { is_done: !item.is_done })
       setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)))
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
   async function removeItem(item: CalendarItem) {
-    if (!confirm('삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: `'${item.title}' 일정을 삭제하시겠습니까?`,
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     try {
       await deleteCalendarItem(item.id)
       setItems((prev) => prev.filter((i) => i.id !== item.id))
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -153,12 +161,12 @@ export default function CalendarPage() {
 
   return (
     <div className="relative max-w-5xl mx-auto px-4 py-8">
-      <GradientBackground />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">캘린더</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={prevMonth}
+            aria-label="이전 달"
             className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition px-2 text-lg"
           >
             ‹
@@ -168,6 +176,7 @@ export default function CalendarPage() {
           </span>
           <button
             onClick={nextMonth}
+            aria-label="다음 달"
             className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition px-2 text-lg"
           >
             ›
@@ -186,7 +195,7 @@ export default function CalendarPage() {
       ) : (
         <div className="flex flex-col lg:flex-row gap-4 items-start">
           {/* ── 월간 그리드 ── */}
-          <div className="flex-1 w-full glass-panel rounded-2xl p-3">
+          <div className="flex-1 w-full panel rounded-2xl p-3">
             <div className="grid grid-cols-7 gap-1 mb-1">
               {WEEKDAYS.map((w) => (
                 <div key={w} className="text-center text-xs font-semibold text-gray-400 py-1">
@@ -210,7 +219,7 @@ export default function CalendarPage() {
                   dots.push(<span key={`a${i}`} className="w-1.5 h-1.5 rounded-full bg-red-400" />)
                 }
                 for (let i = 0; i < dayItems.length && shown < MAX_DOTS; i++, shown++) {
-                  dots.push(<span key={`i${i}`} className="w-1.5 h-1.5 rounded-full bg-indigo-400" />)
+                  dots.push(<span key={`i${i}`} className="w-1.5 h-1.5 rounded-full bg-gray-400" />)
                 }
                 const remaining = total - shown
 
@@ -220,14 +229,14 @@ export default function CalendarPage() {
                     onClick={() => setSelectedDate(key)}
                     className={`min-h-[80px] rounded-xl p-1.5 cursor-pointer transition ${
                       isSelected
-                        ? 'ring-2 ring-indigo-400 bg-white/50 dark:bg-white/5'
-                        : 'hover:bg-white/40 dark:hover:bg-white/5'
+                        ? 'ring-2 ring-gray-400 bg-gray-100 dark:bg-white/10'
+                        : 'hover:bg-gray-100 dark:hover:bg-white/[0.06]'
                     }`}
                   >
                     <span
                       className={`text-xs font-medium inline-flex items-center justify-center w-6 h-6 rounded-full ${
                         isToday
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
                           : 'text-gray-500 dark:text-gray-400'
                       }`}
                     >
@@ -246,8 +255,8 @@ export default function CalendarPage() {
           </div>
 
           {/* ── 오른쪽 패널: 선택한 날짜의 일정 ── */}
-          <aside className="w-full lg:w-80 shrink-0 glass-panel rounded-2xl p-4 flex flex-col min-h-[300px]">
-            <h2 className="text-sm font-semibold gradient-text mb-3">{formatSelectedDate(selectedDate)}</h2>
+          <aside className="w-full lg:w-80 shrink-0 panel rounded-2xl p-4 flex flex-col min-h-[300px]">
+            <h2 className="text-sm font-semibold brand-text mb-3">{formatSelectedDate(selectedDate)}</h2>
 
             {selectedAssignments.length === 0 && selectedItems.length === 0 && (
               <p className="text-sm text-gray-400">일정이 없습니다.</p>
@@ -290,6 +299,7 @@ export default function CalendarPage() {
                     {user && (user.id === it.author.id || user.role === 'ADMIN') && (
                       <button
                         onClick={() => removeItem(it)}
+                        aria-label={`'${it.title}' 일정 삭제`}
                         className="shrink-0 hidden group-hover:inline text-gray-400 hover:text-red-500"
                       >
                         ✕
@@ -311,12 +321,12 @@ export default function CalendarPage() {
                     }}
                     disabled={creating}
                     placeholder="할 일 추가..."
-                    className="flex-1 text-sm bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-60 placeholder-gray-400 dark:placeholder-gray-600"
+                    className="flex-1 text-sm bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-60 placeholder-gray-400 dark:placeholder-gray-600"
                   />
                   <button
                     onClick={submitNewItem}
                     disabled={creating || !newTitle.trim()}
-                    className="gradient-btn text-sm rounded-lg px-3 py-1.5 disabled:opacity-40"
+                    className="btn-primary text-sm rounded-lg px-3 py-1.5 disabled:opacity-40"
                   >
                     추가
                   </button>

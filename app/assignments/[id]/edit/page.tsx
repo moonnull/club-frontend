@@ -104,7 +104,7 @@ export default function EditAssignmentPage() {
   return (
     <form onSubmit={submit} className="flex flex-col h-full">
       <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-        <h1 className="text-xl font-bold gradient-text">과제 수정</h1>
+        <h1 className="text-xl font-bold brand-text">과제 수정</h1>
         <button
           type="button"
           onClick={() => router.push(`/assignments/${id}`)}
@@ -120,7 +120,7 @@ export default function EditAssignmentPage() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="제목을 입력하세요"
           required
-          className="w-full glass-panel text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full panel text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         />
 
         <div className="flex gap-3 shrink-0">
@@ -131,7 +131,7 @@ export default function EditAssignmentPage() {
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
               required
-              className="mt-1 w-full glass-panel text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+              className="mt-1 w-full panel text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
             />
           </label>
           <label className="flex-1 text-xs text-gray-400">
@@ -141,7 +141,7 @@ export default function EditAssignmentPage() {
               value={endAt}
               onChange={(e) => setEndAt(e.target.value)}
               required
-              className="mt-1 w-full glass-panel text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+              className="mt-1 w-full panel text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
             />
           </label>
         </div>
@@ -149,7 +149,7 @@ export default function EditAssignmentPage() {
         <select
           value={trackId}
           onChange={(e) => setTrackId(e.target.value)}
-          className="w-full glass-panel text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shrink-0"
+          className="w-full panel text-sm text-gray-700 dark:text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         >
           <option value="">전체 과제 (모든 회원에게 표시)</option>
           {tracks.map((t) => (
@@ -168,7 +168,7 @@ export default function EditAssignmentPage() {
           <button
             type="submit"
             disabled={saving}
-            className="shrink-0 gradient-btn px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="shrink-0 btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {saving ? '저장 중...' : '저장'}
           </button>

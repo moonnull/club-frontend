@@ -15,8 +15,12 @@ import { createTrack, deleteTrack, listTracks, updateTrack } from '@/lib/api/tra
 import { getMe } from '@/lib/api/auth'
 import { getStoredUser, saveAuth } from '@/lib/session'
 import type { BoardCategory, Track, User } from '@/lib/types'
+import { errorMessage, useToast } from '@/components/Toast'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 export default function AdminPage() {
+  const toast = useToast()
+  const confirm = useConfirm()
   const router = useRouter()
   const [me, setMe] = useState<User | null>(() => getStoredUser<User>())
   const [users, setUsers] = useState<User[]>([])
@@ -72,38 +76,52 @@ export default function AdminPage() {
       await approveUser(userId)
       load()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
   async function toggleRole(user: User) {
     const nextRole = user.role === 'ADMIN' ? 'MEMBER' : 'ADMIN'
-    if (!confirm(`${user.name} 님을 ${nextRole === 'ADMIN' ? '관리자로' : '일반 회원으로'} 변경할까요?`)) return
+    const confirmed = await confirm({
+      message: `${user.name} 님을 ${nextRole === 'ADMIN' ? '관리자로' : '일반 회원으로'} 변경할까요?`,
+      confirmLabel: '변경',
+    })
+    if (!confirmed) return
     try {
       await updateUserRole(user.id, nextRole)
       load()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
   async function remove(user: User) {
-    if (!confirm(`${user.name} 님을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return
+    const confirmed = await confirm({
+      message: `${user.name} 님을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`,
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     try {
       await deleteUser(user.id)
       load()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
   async function resetPassword(user: User) {
-    if (!confirm(`${user.name} 님의 비밀번호를 초기화할까요? 새 임시 비밀번호가 발급됩니다.`)) return
+    const confirmed = await confirm({
+      message: `${user.name} 님의 비밀번호를 초기화할까요?\n새 임시 비밀번호가 발급됩니다.`,
+      confirmLabel: '초기화',
+      destructive: true,
+    })
+    if (!confirmed) return
     try {
       const { temporary_password } = await resetUserPassword(user.id)
       window.prompt(`${user.name} 님의 임시 비밀번호입니다. 복사해서 안전하게 전달해주세요.`, temporary_password)
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -112,7 +130,7 @@ export default function AdminPage() {
       await assignUserTrack(user.id, trackId ? Number(trackId) : null)
       load()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -121,9 +139,9 @@ export default function AdminPage() {
     if (!message || !message.trim()) return
     try {
       await sendNotification(user.id, message.trim())
-      alert('알림을 보냈습니다.')
+      toast('알림을 보냈습니다.')
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -146,7 +164,7 @@ export default function AdminPage() {
       await updateBoard(board.id, { name })
       loadBoards()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -155,17 +173,22 @@ export default function AdminPage() {
       await updateBoard(board.id, { admin_only: !board.admin_only })
       loadBoards()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
   async function removeBoard(board: BoardCategory) {
-    if (!confirm(`'${board.name}' 게시판을 삭제할까요?`)) return
+    const confirmed = await confirm({
+      message: `'${board.name}' 게시판을 삭제할까요?`,
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     try {
       await deleteBoard(board.id)
       loadBoards()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -188,17 +211,22 @@ export default function AdminPage() {
       await updateTrack(track.id, { name })
       loadTracks()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
   async function removeTrack(track: Track) {
-    if (!confirm(`'${track.name}' 트랙을 삭제할까요?`)) return
+    const confirmed = await confirm({
+      message: `'${track.name}' 트랙을 삭제할까요?`,
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     try {
       await deleteTrack(track.id)
       loadTracks()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      toast(errorMessage(err), 'error')
     }
   }
 
@@ -228,7 +256,7 @@ export default function AdminPage() {
                 {pending.map((u) => (
                   <div
                     key={u.id}
-                    className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+                    className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
                   >
                     <div>
                       <p className="font-medium text-gray-800 dark:text-gray-100">
@@ -241,7 +269,7 @@ export default function AdminPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => approve(u.id)}
-                        className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium transition"
+                        className="text-sm btn-primary px-3 py-1.5 rounded-lg font-medium transition"
                       >
                         승인
                       </button>
@@ -266,13 +294,13 @@ export default function AdminPage() {
               {approved.map((u) => (
                 <div
                   key={u.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
                 >
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-100">
                       {u.name} <span className="text-gray-400 font-normal">· {u.student_id}</span>
                       {u.role === 'ADMIN' && (
-                        <span className="ml-2 text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium">
+                        <span className="ml-2 text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
                           관리자
                         </span>
                       )}
@@ -285,7 +313,7 @@ export default function AdminPage() {
                     <select
                       value={u.track?.id ?? ''}
                       onChange={(e) => changeTrack(u, e.target.value)}
-                      className="text-sm bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="text-sm bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-400"
                     >
                       <option value="">트랙 미배정</option>
                       {tracks.map((t) => (
@@ -334,13 +362,13 @@ export default function AdminPage() {
               {boards.map((b) => (
                 <div
                   key={b.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
                 >
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-100">
                       {b.name} <span className="text-gray-400 font-normal">· {b.key}</span>
                       {b.admin_only && (
-                        <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium">
+                        <span className="ml-2 text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
                           관리자 전용 작성
                         </span>
                       )}
@@ -372,21 +400,21 @@ export default function AdminPage() {
 
             <form
               onSubmit={addBoard}
-              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
             >
               <input
                 value={newBoard.key}
                 onChange={(e) => setNewBoard((b) => ({ ...b, key: e.target.value.toUpperCase() }))}
                 placeholder="키 (예: STUDY)"
                 required
-                className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
               <input
                 value={newBoard.name}
                 onChange={(e) => setNewBoard((b) => ({ ...b, name: e.target.value }))}
                 placeholder="이름 (예: 스터디)"
                 required
-                className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
               <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 select-none">
                 <input
@@ -399,7 +427,7 @@ export default function AdminPage() {
               </label>
               <button
                 type="submit"
-                className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium transition"
+                className="text-sm btn-primary px-3 py-1.5 rounded-lg font-medium transition"
               >
                 추가
               </button>
@@ -415,7 +443,7 @@ export default function AdminPage() {
               {tracks.map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
                 >
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-100">
@@ -442,25 +470,25 @@ export default function AdminPage() {
 
             <form
               onSubmit={addTrack}
-              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl px-4 py-3"
+              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
             >
               <input
                 value={newTrack.key}
                 onChange={(e) => setNewTrack((t) => ({ ...t, key: e.target.value.toUpperCase() }))}
                 placeholder="키 (예: REVERSING)"
                 required
-                className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
               <input
                 value={newTrack.name}
                 onChange={(e) => setNewTrack((t) => ({ ...t, name: e.target.value }))}
                 placeholder="이름 (예: 리버싱)"
                 required
-                className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
               <button
                 type="submit"
-                className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium transition"
+                className="text-sm btn-primary px-3 py-1.5 rounded-lg font-medium transition"
               >
                 추가
               </button>

@@ -23,7 +23,7 @@ export default function ErrorPage({
       <div className="flex items-center gap-2">
         <button
           onClick={reset}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          className="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           다시 시도
         </button>

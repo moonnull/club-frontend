@@ -45,7 +45,7 @@ const SlashCommandMenu = forwardRef<SlashCommandMenuHandle, Props>((props, ref) 
   if (props.items.length === 0) return null
 
   return (
-    <div className="w-56 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-lg shadow-lg py-1 max-h-72 overflow-y-auto">
+    <div className="w-56 bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg py-1 max-h-72 overflow-y-auto">
       {props.items.map((item, i) => (
         <button
           key={item.title}

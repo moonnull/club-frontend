@@ -50,7 +50,7 @@ export default function SignupPage() {
       placeholder={placeholder}
       value={form[k]}
       onChange={(e) => set(k, e.target.value)}
-      className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+      className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
       required
     />
   )
@@ -67,7 +67,7 @@ export default function SignupPage() {
         <select
           value={form.part}
           onChange={(e) => set('part', e.target.value)}
-          className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+          className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
         >
           {PARTS.map((p) => (
             <option key={p}>{p}</option>
@@ -82,14 +82,14 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium disabled:opacity-50 transition"
+          className="w-full btn-primary py-2 rounded-lg font-medium disabled:opacity-50 transition"
         >
           {loading ? '처리 중...' : '가입하기'}
         </button>
       </form>
       <p className="mt-4 text-sm text-center text-gray-500">
         이미 계정이 있으신가요?{' '}
-        <Link href="/login" className="text-indigo-600 hover:underline">
+        <Link href="/login" className="text-gray-900 dark:text-white hover:underline">
           로그인
         </Link>
       </p>

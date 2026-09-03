@@ -9,8 +9,12 @@ import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import { toDate } from '@/lib/formatDeadline'
 import type { Comment, Post, User } from '@/lib/types'
+import { errorMessage, useToast } from '@/components/Toast'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 export default function NoticeDetailPage() {
+  const toast = useToast()
+  const confirm = useConfirm()
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const user = getStoredUser<User>()
@@ -48,7 +52,7 @@ export default function NoticeDetailPage() {
     })
     const offPostDeleted = realtimeHub.on('post_deleted', (data) => {
       if (String(data.post_id) !== String(id)) return
-      alert('다른 사용자가 이 공지사항을 삭제했습니다.')
+      toast('다른 사용자가 이 공지사항을 삭제했습니다.')
       router.push('/notices')
     })
     return () => {
@@ -59,7 +63,12 @@ export default function NoticeDetailPage() {
   }, [id])
 
   async function handleDelete() {
-    if (!confirm('공지사항을 삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: '공지사항을 삭제하시겠습니까?',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await deletePost(id)
     router.push('/notices')
   }
@@ -103,8 +112,8 @@ export default function NoticeDetailPage() {
         ← 목록으로
       </Link>
 
-      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-sm p-6">
-        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-500/15 text-indigo-500 mb-2">
+      <div className="bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-6">
+        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium badge-neutral mb-2">
           {notice.track ? `${notice.track.name} 트랙 전용` : '전체 공지'}
         </span>
         <div className="flex items-start justify-between gap-3 mb-2">
@@ -113,7 +122,7 @@ export default function NoticeDetailPage() {
             <div className="flex items-center gap-3 shrink-0 mt-1">
               <button
                 onClick={() => router.push(`/notices/${id}/edit`)}
-                className="text-xs text-gray-400 hover:text-indigo-500 transition"
+                className="text-xs text-gray-400 hover:text-gray-500 transition"
               >
                 수정
               </button>
@@ -143,7 +152,7 @@ export default function NoticeDetailPage() {
                 <li key={a.id}>
                   <a
                     href={toDownloadUrl(a.url, a.filename)}
-                    className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
                   >
                     📎 {a.filename}
                   </a>
@@ -155,7 +164,7 @@ export default function NoticeDetailPage() {
       </div>
 
       {/* 댓글 */}
-      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl shadow-sm mt-4 p-6">
+      <div className="bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm mt-4 p-6">
         <p className="text-sm font-semibold text-gray-900 dark:text-white mb-4">댓글 ({comments.length})</p>
 
         {comments.length === 0 ? (
@@ -193,19 +202,19 @@ export default function NoticeDetailPage() {
               onChange={(e) => setText(e.target.value)}
               placeholder="댓글을 입력하세요."
               rows={3}
-              className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 transition placeholder-gray-400 dark:placeholder-gray-600"
+              className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-gray-400 transition placeholder-gray-400 dark:placeholder-gray-600"
             />
             <div className="flex justify-end mt-2">
               <button
                 type="submit"
-                className="gradient-btn text-xs font-semibold px-4 py-1.5 rounded-lg"
+                className="btn-primary text-xs font-semibold px-4 py-1.5 rounded-lg"
               >
                 작성
               </button>
             </div>
           </form>
         ) : (
-          <Link href="/login" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+          <Link href="/login" className="text-sm text-gray-900 dark:text-white hover:underline">
             로그인 후 댓글 작성 가능
           </Link>
         )}

@@ -51,14 +51,14 @@
 }
 
 .content :global(.ProseMirror blockquote) {
-  border-left: 3px solid #a5b4fc;
+  border-left: 3px solid #d1d5db;
   padding-left: 0.8rem;
   color: #6b7280;
   margin: 0.6rem 0;
 }
 
 .content :global(.ProseMirror pre) {
-  background: #111827;
+  background: #111111;
   color: #e5e7eb;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
@@ -71,46 +71,49 @@
   font-family: ui-monospace, monospace;
 }
 
-/* 코드블록 문법 강조 (lowlight/highlight.js 토큰) — 사이트 인디고/퍼플/핑크 팔레트에 맞춘 색상 */
+/* 코드블록 문법 강조 — 무채색 팔레트에 맞춰 색상 대신 명도/굵기로 구분 */
 .content :global(.hljs-keyword),
 .content :global(.hljs-selector-tag),
 .content :global(.hljs-literal),
 .content :global(.hljs-type) {
-  color: #c4b5fd;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .content :global(.hljs-string),
 .content :global(.hljs-attr),
 .content :global(.hljs-regexp) {
-  color: #86efac;
+  color: #d1d5db;
 }
 
 .content :global(.hljs-comment),
 .content :global(.hljs-quote) {
-  color: #9ca3af;
+  color: #6b7280;
   font-style: italic;
 }
 
 .content :global(.hljs-number) {
-  color: #fbbf24;
+  color: #d1d5db;
 }
 
 .content :global(.hljs-title),
 .content :global(.hljs-title.function_),
 .content :global(.hljs-built_in) {
-  color: #f9a8d4;
+  color: #f3f4f6;
+  font-weight: 600;
 }
 
 .content :global(.hljs-name),
 .content :global(.hljs-tag),
 .content :global(.hljs-attribute) {
-  color: #67e8f9;
+  color: #e5e7eb;
+  font-weight: 600;
 }
 
 .content :global(.hljs-variable),
 .content :global(.hljs-params),
 .content :global(.hljs-meta) {
-  color: #93c5fd;
+  color: #9ca3af;
 }
 
 .content :global(.ProseMirror hr) {
@@ -126,10 +129,10 @@
 }
 
 :global(.dark) .content :global(.ProseMirror blockquote) {
-  border-left-color: #4f46e5;
+  border-left-color: #4b5563;
   color: #9ca3af;
 }
 
 :global(.dark) .content :global(.ProseMirror hr) {
-  border-top-color: #2a2a2a;
+  border-top-color: #1f2937;
 }

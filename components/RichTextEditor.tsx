@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react'
 import { uploadFile } from '@/lib/api/uploads'
 import { SlashCommand } from './slashCommandExtension'
 import styles from './RichTextEditor.module.css'
+import { errorMessage, useToast } from './Toast'
 
 const lowlight = createLowlight(common)
 
@@ -26,6 +27,7 @@ export default function RichTextEditor({
   placeholder?: string
   fullHeight?: boolean
 }) {
+  const toast = useToast()
   const insertImageRef = useRef<((url: string) => void) | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -66,7 +68,7 @@ export default function RichTextEditor({
             const node = view.state.schema.nodes.image.create({ src: result.url })
             view.dispatch(view.state.tr.replaceSelectionWith(node))
           })
-          .catch((err: unknown) => alert(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.'))
+          .catch((err: unknown) => toast(errorMessage(err, '이미지 업로드에 실패했습니다.'), 'error'))
         return true
       },
     },
@@ -86,7 +88,7 @@ export default function RichTextEditor({
       const result = await uploadFile(file)
       insert(result.url)
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.')
+      toast(errorMessage(err, '이미지 업로드에 실패했습니다.'), 'error')
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
@@ -96,7 +98,7 @@ export default function RichTextEditor({
 
   return (
     <div
-      className={`${editable ? 'border border-gray-200 dark:border-[#333] rounded-lg px-3 py-2 bg-white dark:bg-[#1a1a1a]' : ''} ${
+      className={`${editable ? 'border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 bg-white dark:bg-[#0f0f0f]' : ''} ${
         fullHeight ? 'flex-1 min-h-0 flex flex-col' : ''
       }`}
     >
@@ -114,7 +116,7 @@ export default function RichTextEditor({
                 onClick={b.cmd}
                 className={`w-7 h-7 text-xs font-semibold rounded transition ${
                   editor.isActive(b.mark)
-                    ? 'bg-indigo-500 text-white'
+                    ? 'bg-gray-900 dark:bg-white text-white'
                     : 'text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200'
                 }`}
               >

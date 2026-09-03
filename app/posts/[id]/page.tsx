@@ -9,12 +9,15 @@ import { realtimeHub } from '@/lib/ws'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import { toDate } from '@/lib/formatDeadline'
-import GradientBackground from '@/components/GradientBackground'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import PostHeroBanner from '@/components/PostHeroBanner'
 import type { Comment, Post, User } from '@/lib/types'
+import { errorMessage, useToast } from '@/components/Toast'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 export default function PostDetailPage() {
+  const toast = useToast()
+  const confirm = useConfirm()
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [post, setPost] = useState<Post | null>(null)
@@ -62,7 +65,7 @@ export default function PostDetailPage() {
     })
     const offPostDeleted = realtimeHub.on('post_deleted', (data) => {
       if (String(data.post_id) !== String(id)) return
-      alert('다른 사용자가 이 게시글을 삭제했습니다.')
+      toast('다른 사용자가 이 게시글을 삭제했습니다.')
       router.push('/posts')
     })
     return () => {
@@ -73,7 +76,12 @@ export default function PostDetailPage() {
   }, [id])
 
   async function handleDelete() {
-    if (!confirm('게시글을 삭제하시겠습니까?')) return
+    const confirmed = await confirm({
+      message: '게시글을 삭제하시겠습니까?',
+      confirmLabel: '삭제',
+      destructive: true,
+    })
+    if (!confirmed) return
     await deletePost(id)
     router.push('/posts')
   }
@@ -120,9 +128,8 @@ export default function PostDetailPage() {
 
   return (
     <div className="relative flex h-[calc(100vh-56px)]">
-      <GradientBackground />
       {/* ── 왼쪽 사이드바: 같은 게시판 목록 ── */}
-      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 glass-panel flex flex-col overflow-hidden">
+      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 surface flex flex-col overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <Link
             href="/posts"
@@ -142,20 +149,20 @@ export default function PostDetailPage() {
               href={`/posts/${p.id}`}
               className={`block px-4 py-2.5 border-l-2 transition ${
                 p.id === post.id
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+                  ? 'border-gray-900 dark:border-white bg-gray-100 dark:bg-white/[0.06]'
                   : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800/40'
               }`}
             >
               <p
                 className={`text-sm truncate leading-snug ${
                   p.id === post.id
-                    ? 'font-medium gradient-text'
+                    ? 'font-medium brand-text'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
                 {p.title}
               </p>
-              <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-0.5">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
                 {toDate(p.created_at).toLocaleDateString('ko')}
               </p>
             </Link>
@@ -169,7 +176,7 @@ export default function PostDetailPage() {
           <PostHeroBanner boardName={boardLabel} boardKey={post.board_type} title={post.title} />
 
           {/* 메타 + 수정/삭제 */}
-          <div className="flex items-center justify-between gap-3 glass-panel rounded-xl px-4 py-3 mt-4">
+          <div className="flex items-center justify-between gap-3 panel rounded-xl px-4 py-3 mt-4">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
               <InitialsAvatar name={post.author.name} size={28} />
               <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -190,7 +197,7 @@ export default function PostDetailPage() {
               <div className="flex items-center gap-3 shrink-0">
                 <button
                   onClick={() => router.push(`/posts/${id}/edit`)}
-                  className="text-xs text-gray-400 hover:text-indigo-500 transition"
+                  className="text-xs text-gray-400 hover:text-gray-500 transition"
                 >
                   수정
                 </button>
@@ -218,7 +225,7 @@ export default function PostDetailPage() {
                   <li key={a.id}>
                     <a
                       href={toDownloadUrl(a.url, a.filename)}
-                      className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                      className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
                     >
                       📎 {a.filename}
                     </a>
@@ -231,11 +238,11 @@ export default function PostDetailPage() {
       </div>
 
       {/* ── 오른쪽 패널: 댓글/제출 ── */}
-      <div className="w-80 shrink-0 border-l border-gray-200 dark:border-gray-800 glass-panel flex flex-col overflow-hidden">
+      <div className="w-80 shrink-0 border-l border-gray-200 dark:border-gray-800 surface flex flex-col overflow-hidden">
         {/* 탭 헤더 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <div className="flex gap-4">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-indigo-500 pb-0.5">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-0.5">
               댓글
             </span>
             {post.board_type === 'QNA' && (
@@ -305,7 +312,7 @@ export default function PostDetailPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">
                   {c.content}
                 </p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-600 mt-1.5">
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
                   {toDate(c.created_at).toLocaleString('ko')}
                 </p>
               </div>
@@ -322,7 +329,7 @@ export default function PostDetailPage() {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="'/'를 입력하여 작성을 시작해보세요."
                 rows={3}
-                className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-indigo-500 transition placeholder-gray-400 dark:placeholder-gray-600"
+                className="w-full bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-500 transition placeholder-gray-400 dark:placeholder-gray-600"
               />
               <div className="flex items-center justify-between mt-2">
                 <span className="text-xs text-gray-400">{text.length}자</span>
@@ -337,7 +344,7 @@ export default function PostDetailPage() {
           ) : (
             <Link
               href="/login"
-              className="block text-center text-sm text-indigo-600 dark:text-indigo-400 hover:underline py-2"
+              className="block text-center text-sm text-gray-900 dark:text-white hover:underline py-2"
             >
               로그인 후 댓글 작성 가능
             </Link>

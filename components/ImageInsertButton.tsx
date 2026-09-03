@@ -1,12 +1,14 @@
 'use client'
 import { useRef, useState } from 'react'
 import { uploadFile } from '@/lib/api/uploads'
+import { errorMessage, useToast } from './Toast'
 
 export default function ImageInsertButton({
   onUploaded,
 }: {
   onUploaded: (url: string) => void
 }) {
+  const toast = useToast()
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
@@ -18,7 +20,7 @@ export default function ImageInsertButton({
       const result = await uploadFile(file)
       onUploaded(result.url)
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.')
+      toast(errorMessage(err, '이미지 업로드에 실패했습니다.'), 'error')
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
@@ -31,7 +33,7 @@ export default function ImageInsertButton({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="text-xs text-gray-400 hover:text-indigo-500 transition disabled:opacity-50"
+        className="text-xs text-gray-400 hover:text-gray-500 transition disabled:opacity-50"
       >
         🖼️ {uploading ? '업로드 중...' : '이미지 삽입'}
       </button>
