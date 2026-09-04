@@ -80,6 +80,15 @@ export default function ProfilePage() {
               ? me.tracks.map((t) => t.name).join(', ')
               : '미배정 (관리자에게 문의해주세요)'}
           </p>
+          <p>플랜: {me.plan ? me.plan.name : '미배정'}</p>
+          {((me.caution_count ?? 0) > 0 || (me.warning_count ?? 0) > 0) && (
+            <p>
+              주의 {me.caution_count ?? 0}회 ·{' '}
+              <span className={(me.warning_count ?? 0) > 0 ? 'text-red-500' : ''}>
+                경고 {me.warning_count ?? 0}회
+              </span>
+            </p>
+          )}
         </div>
 
         <form onSubmit={submit} className="space-y-4">

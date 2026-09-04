@@ -188,9 +188,28 @@ function SubmissionCard({
           )}
         </div>
         <h2 className="text-base font-bold text-gray-900 dark:text-white mb-1">{submission.title}</h2>
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 mb-4">
           <span className="font-medium text-gray-600 dark:text-gray-300">{submission.user.name}</span>
-          <span>·</span>
+          {submission.user.plan && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{submission.user.plan.name}</span>
+            </>
+          )}
+          {/* 주의/경고는 관리자만 본다 — 다른 회원에게 노출할 정보가 아니다. */}
+          {currentUser?.role === 'ADMIN' && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className={submission.user.caution_count > 0 ? 'text-gray-600 dark:text-gray-300' : ''}>
+                주의: {submission.user.caution_count ?? 0}회
+              </span>
+              <span aria-hidden="true">/</span>
+              <span className={submission.user.warning_count > 0 ? 'text-red-500' : ''}>
+                경고: {submission.user.warning_count ?? 0}회
+              </span>
+            </>
+          )}
+          <span aria-hidden="true">·</span>
           <span className="tabular-nums">{formatTimestamp(submission.submitted_at ?? submission.created_at)}</span>
         </div>
 
@@ -922,8 +941,14 @@ export default function AssignmentDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                       <span className="truncate">{s.user.name}</span>
+                      {s.user.plan && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="truncate">{s.user.plan.name}</span>
+                        </>
+                      )}
                       <span aria-hidden="true">·</span>
-                      <span className="shrink-0 tabular-nums">
+                      <span className="shrink-0 tabular-nums ml-auto">
                         {formatTimestamp(s.submitted_at ?? s.created_at)}
                       </span>
                     </div>

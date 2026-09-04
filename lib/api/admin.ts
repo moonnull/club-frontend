@@ -17,6 +17,17 @@ export function assignUserTracks(userId: number, trackIds: number[]) {
   return api.put<User>(`/api/admin/users/${userId}/track`, { track_ids: trackIds })
 }
 
+export function assignUserPlan(userId: number, planId: number | null) {
+  return api.put<User>(`/api/admin/users/${userId}/plan`, { plan_id: planId })
+}
+
+export function updateUserPenalty(userId: number, cautionCount: number, warningCount: number) {
+  return api.put<User>(`/api/admin/users/${userId}/penalty`, {
+    caution_count: cautionCount,
+    warning_count: warningCount,
+  })
+}
+
 export function deleteUser(userId: number) {
   return api.del(`/api/admin/users/${userId}`)
 }

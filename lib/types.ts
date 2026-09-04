@@ -5,6 +5,13 @@ export interface Track {
   order: number
 }
 
+export interface Plan {
+  id: number
+  key: string
+  name: string
+  order: number
+}
+
 export interface User {
   id: number
   name: string
@@ -18,6 +25,11 @@ export interface User {
   has_security_question: boolean
   /** 한 사람이 여러 트랙을 동시에 수강할 수 있다. 빈 배열이면 미배정. */
   tracks: Track[]
+  /** 수강 플랜. 회원당 하나이며 미배정이면 null. */
+  plan: Plan | null
+  /** 관리자가 부여한 누적 주의/경고 횟수 */
+  caution_count: number
+  warning_count: number
 }
 
 export interface BoardCategory {
