@@ -510,6 +510,9 @@ export default function AssignmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const user = getStoredUser<User>()
+  // 제출 현황(다른 사람의 제출물)은 관리자만 볼 수 있다. 일반 회원에게는
+  // 탭 자체를 감추고, 목록 조회도 하지 않는다 (백엔드가 403을 준다).
+  const isAdmin = user?.role === 'ADMIN'
 
   const [assignment, setAssignment] = useState<Assignment | null>(null)
   const [loading, setLoading] = useState(true)
@@ -560,9 +563,9 @@ export default function AssignmentDetailPage() {
         setAssignment(a)
         setTitle((prev) => prev || (user ? `${a.title}_${user.name} 제출` : ''))
       }),
-      listSubmissions(id).then(setSubmissions),
       listQuestions(id).then(setQuestions),
     ]
+    if (isAdmin) requests.push(listSubmissions(id).then(setSubmissions))
     if (user) {
       requests.push(
         getMySubmission(id).then((sub) => {
@@ -585,9 +588,10 @@ export default function AssignmentDetailPage() {
     Promise.all(requests)
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
-  }, [id, user?.id])
+  }, [id, user?.id, isAdmin])
 
   function refreshSubmissions() {
+    if (!isAdmin) return Promise.resolve()
     return listSubmissions(id).then(setSubmissions)
   }
 
@@ -698,8 +702,7 @@ export default function AssignmentDetailPage() {
   const closed = isPastDeadline(assignment.end_at)
   const canSubmit = !!user && !notStarted && !closed
   const showEditForm = !mySubmission?.is_final || editingOwn
-  const submissionsEmptyMessage =
-    user?.role === 'ADMIN' || closed ? '아직 제출한 사람이 없습니다.' : '마감 후 공개됩니다.'
+  const submissionsEmptyMessage = '아직 제출한 사람이 없습니다.'
 
   return (
     <div ref={containerRef} className="flex h-full">
@@ -776,16 +779,18 @@ export default function AssignmentDetailPage() {
           >
             제출 작성
           </button>
-          <button
-            onClick={() => setRightTab('list')}
-            className={`text-sm font-medium transition ${
-              rightTab === 'list'
-                ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-0.5'
-                : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            제출 현황 ({submissions.length})
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setRightTab('list')}
+              className={`text-sm font-medium transition ${
+                rightTab === 'list'
+                  ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-0.5'
+                  : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              제출 현황 ({submissions.length})
+            </button>
+          )}
           <button
             onClick={() => setRightTab('qna')}
             className={`text-sm font-medium transition ${
@@ -801,6 +806,8 @@ export default function AssignmentDetailPage() {
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {!user ? (
             <p className="text-sm text-gray-400">로그인 후 이용 가능합니다.</p>
+          ) : rightTab === 'list' && !isAdmin ? (
+            <p className="text-sm text-gray-400">제출 현황은 관리자만 볼 수 있습니다.</p>
           ) : rightTab === 'write' ? (
             !showEditForm && mySubmission ? (
               <SubmissionCard
@@ -1002,7 +1009,7 @@ export default function AssignmentDetailPage() {
                       >
                         <div className="flex items-center gap-2 mb-1">
                           {q.is_answered && (
-                            <span className="text-xs badge-neutral px-1.5 py-0.5 rounded font-medium shrink-0">
+                            <span className="text-xs bg-green-500/15 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded font-medium shrink-0">
                               답변됨
                             </span>
                           )}

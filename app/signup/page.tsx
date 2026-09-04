@@ -6,6 +6,17 @@ import { signup } from '@/lib/api/auth'
 
 const PARTS = ['개발', '기획', '디자인', '기타']
 
+const PASSWORD_RULE = '8자 이상, 영문 대문자·소문자·숫자를 각각 1자 이상 포함'
+
+/** 백엔드(app/schemas/user.py)의 규칙과 동일하게 맞춘다. */
+function passwordProblem(pw: string): string | null {
+  if (pw.length < 8) return PASSWORD_RULE
+  if (!/[A-Z]/.test(pw)) return PASSWORD_RULE
+  if (!/[a-z]/.test(pw)) return PASSWORD_RULE
+  if (!/[0-9]/.test(pw)) return PASSWORD_RULE
+  return null
+}
+
 export default function SignupPage() {
   const router = useRouter()
   const [form, setForm] = useState({
@@ -18,6 +29,7 @@ export default function SignupPage() {
     security_question: '',
     security_answer: '',
   })
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -26,6 +38,17 @@ export default function SignupPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    const problem = passwordProblem(form.password)
+    if (problem) {
+      setError(`비밀번호는 ${problem}이어야 합니다.`)
+      return
+    }
+    if (form.password !== passwordConfirm) {
+      setError('비밀번호가 일치하지 않습니다.')
+      return
+    }
+
     setLoading(true)
     try {
       await signup({
@@ -62,7 +85,31 @@ export default function SignupPage() {
         {input('name', '이름')}
         {input('student_id', '학번')}
         {input('email', '이메일', 'email')}
-        {input('password', '비밀번호', 'password')}
+        <div>
+          {input('password', '비밀번호', 'password')}
+          <p
+            className={`text-xs mt-1 ${
+              form.password && passwordProblem(form.password)
+                ? 'text-red-500'
+                : 'text-gray-400'
+            }`}
+          >
+            {PASSWORD_RULE}
+          </p>
+        </div>
+        <div>
+          <input
+            type="password"
+            placeholder="비밀번호 확인"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            className="w-full bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
+            required
+          />
+          {passwordConfirm && form.password !== passwordConfirm && (
+            <p className="text-xs text-red-500 mt-1">비밀번호가 일치하지 않습니다.</p>
+          )}
+        </div>
         {input('generation', '기수 (숫자)', 'number')}
         <select
           value={form.part}
