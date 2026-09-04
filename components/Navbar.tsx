@@ -13,8 +13,17 @@ import { clearAuth, getStoredUser } from '@/lib/session'
 import { realtimeHub, type ConnectionStatus } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
 import type { Notification, User } from '@/lib/types'
+import { Bell, CalendarDays, ClipboardList, FileText, Layers, Megaphone, ShieldCheck, X } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { errorMessage, useToast } from './Toast'
+
+const NAV_LINKS = [
+  { href: '/notices', label: '공지사항', Icon: Megaphone },
+  { href: '/posts', label: '게시판', Icon: ClipboardList },
+  { href: '/assignments', label: '과제', Icon: FileText },
+  { href: '/tracks', label: '트랙', Icon: Layers },
+  { href: '/calendar', label: '캘린더', Icon: CalendarDays },
+]
 
 export default function Navbar() {
   const toast = useToast()
@@ -130,36 +139,36 @@ export default function Navbar() {
         Chimera
       </Link>
 
-      <Link
-        href="/notices"
-        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-      >
-        공지사항
-      </Link>
-      <Link
-        href="/posts"
-        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-      >
-        게시판
-      </Link>
-      <Link
-        href="/assignments"
-        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-      >
-        과제
-      </Link>
-      <Link
-        href="/calendar"
-        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-      >
-        캘린더
-      </Link>
+      {NAV_LINKS.map(({ href, label, Icon }) => (
+        <Link
+          key={href}
+          href={href}
+          // md 미만에서는 라벨이 display:none이라 접근성 트리에서 빠진다.
+          aria-label={label}
+          aria-current={pathname.startsWith(href) ? 'page' : undefined}
+          className={`text-sm inline-flex items-center gap-1.5 transition ${
+            pathname.startsWith(href)
+              ? 'text-gray-900 dark:text-white font-medium'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
+        >
+          <Icon aria-hidden="true" className="size-4" />
+          <span className="hidden md:inline">{label}</span>
+        </Link>
+      ))}
       {user?.role === 'ADMIN' && (
         <Link
           href="/admin"
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+          aria-label="관리자"
+          aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
+          className={`text-sm inline-flex items-center gap-1.5 transition ${
+            pathname.startsWith('/admin')
+              ? 'text-gray-900 dark:text-white font-medium'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
         >
-          관리자
+          <ShieldCheck aria-hidden="true" className="size-4" />
+          <span className="hidden md:inline">관리자</span>
         </Link>
       )}
 
@@ -177,7 +186,7 @@ export default function Navbar() {
             aria-haspopup="true"
             className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
           >
-            <span aria-hidden="true" className="text-gray-500 dark:text-gray-400 text-base">🔔</span>
+            <Bell aria-hidden="true" className="size-5 text-gray-500 dark:text-gray-400" />
             {unread > 0 && (
               <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-medium leading-none">
                 {unread > 9 ? '9+' : unread}
@@ -230,7 +239,7 @@ export default function Navbar() {
                           title="알림 삭제"
                           aria-label="알림 삭제"
                         >
-                          ✕
+                          <X aria-hidden="true" className="size-3.5" />
                         </button>
                       </div>
                     </li>

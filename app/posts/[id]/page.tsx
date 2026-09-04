@@ -14,6 +14,7 @@ import PostHeroBanner from '@/components/PostHeroBanner'
 import type { Comment, Post, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { ArrowLeft, Check } from 'lucide-react'
 
 export default function PostDetailPage() {
   const toast = useToast()
@@ -135,7 +136,8 @@ export default function PostDetailPage() {
             href="/posts"
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition mb-2"
           >
-            ← 목록으로
+            <ArrowLeft aria-hidden="true" className="size-3.5" />
+            목록으로
           </Link>
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
             {boardLabel} 게시판
@@ -189,7 +191,7 @@ export default function PostDetailPage() {
               {post.is_closed && (
                 <>
                   <span>·</span>
-                  <span className="text-green-500 font-medium">✓ 채택 완료</span>
+                  <span className="text-green-500 font-medium inline-flex items-center gap-1"><Check aria-hidden="true" className="size-3.5" />채택 완료</span>
                 </>
               )}
             </div>

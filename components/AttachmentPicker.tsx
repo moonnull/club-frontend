@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import { uploadFile } from '@/lib/api/uploads'
 import type { UploadResult } from '@/lib/types'
+import { X } from 'lucide-react'
 
 const ACCEPT = '.pdf,.zip,.jpg,.jpeg,.png,.gif,.webp'
 
@@ -67,7 +68,7 @@ export default function AttachmentPicker({
                 aria-label={`첨부파일 '${f.filename}' 제거`}
                 className="text-gray-400 hover:text-red-500 shrink-0 ml-2"
               >
-                ✕
+                <X aria-hidden="true" className="size-3.5" />
               </button>
             </li>
           ))}

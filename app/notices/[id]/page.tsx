@@ -11,6 +11,7 @@ import { toDate } from '@/lib/formatDeadline'
 import type { Comment, Post, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { ArrowLeft } from 'lucide-react'
 
 export default function NoticeDetailPage() {
   const toast = useToast()
@@ -109,7 +110,8 @@ export default function NoticeDetailPage() {
         href="/notices"
         className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition mb-4"
       >
-        ← 목록으로
+        <ArrowLeft aria-hidden="true" className="size-3.5" />
+        목록으로
       </Link>
 
       <div className="bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-6">

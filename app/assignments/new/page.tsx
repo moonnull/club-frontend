@@ -7,6 +7,7 @@ import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import type { Track, UploadResult, User } from '@/lib/types'
+import { X } from 'lucide-react'
 
 export default function NewAssignmentPage() {
   const router = useRouter()
@@ -61,9 +62,10 @@ export default function NewAssignmentPage() {
         <button
           type="button"
           onClick={() => router.push('/assignments')}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
         >
-          ✕ 작성 취소
+          <X aria-hidden="true" className="size-3.5" />
+          작성 취소
         </button>
       </div>
 

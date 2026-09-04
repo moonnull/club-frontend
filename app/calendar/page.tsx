@@ -13,6 +13,7 @@ import { toDate } from '@/lib/formatDeadline'
 import type { AssignmentListItem, CalendarItem, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const MAX_DOTS = 4
@@ -167,9 +168,9 @@ export default function CalendarPage() {
           <button
             onClick={prevMonth}
             aria-label="이전 달"
-            className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition px-2 text-lg"
+            className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition px-2"
           >
-            ‹
+            <ChevronLeft aria-hidden="true" className="size-5" />
           </button>
           <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 min-w-[92px] text-center">
             {year}년 {month + 1}월
@@ -177,9 +178,9 @@ export default function CalendarPage() {
           <button
             onClick={nextMonth}
             aria-label="다음 달"
-            className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition px-2 text-lg"
+            className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition px-2"
           >
-            ›
+            <ChevronRight aria-hidden="true" className="size-5" />
           </button>
           <button
             onClick={goToday}
@@ -302,7 +303,7 @@ export default function CalendarPage() {
                         aria-label={`'${it.title}' 일정 삭제`}
                         className="shrink-0 hidden group-hover:inline text-gray-400 hover:text-red-500"
                       >
-                        ✕
+                        <X aria-hidden="true" className="size-3.5" />
                       </button>
                     )}
                   </div>

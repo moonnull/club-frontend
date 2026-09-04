@@ -14,9 +14,7 @@ export function formatDeadline(startAt: string, endAt: string): string {
   const end = toDate(endAt)
   const dateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   const timeStr = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
-  const days = Math.round((end.getTime() - start.getTime()) / 86400000)
-  const duration = days >= 7 && days % 7 === 0 ? `${days / 7}주` : `${days}일`
-  return `${dateStr(start)} ~ ${dateStr(end)} ${timeStr(end)} (${duration})`
+  return `${dateStr(start)} ~ ${dateStr(end)} ${timeStr(end)} (${duration(start, end)})`
 }
 
 export function isBeforeStart(startAt: string): boolean {
@@ -25,4 +23,23 @@ export function isBeforeStart(startAt: string): boolean {
 
 export function isPastDeadline(endAt: string): boolean {
   return new Date() > toDate(endAt)
+}
+
+/** 과제 카드용 짧은 표기 — "03월 09일 ~ 03월 22일 오후 4시 (2주)" */
+export function formatDeadlineShort(startAt: string, endAt: string): string {
+  const start = toDate(startAt)
+  const end = toDate(endAt)
+  const md = (d: Date) => `${pad(d.getMonth() + 1)}월 ${pad(d.getDate())}일`
+  const h = end.getHours()
+  const m = end.getMinutes()
+  const ampm = h < 12 ? '오전' : '오후'
+  const hour12 = h % 12 === 0 ? 12 : h % 12
+  const timeStr = m === 0 ? `${ampm} ${hour12}시` : `${ampm} ${hour12}시 ${m}분`
+  return `${md(start)} ~ ${md(end)} ${timeStr} (${duration(start, end)})`
+}
+
+/** 과제 기간을 "2주" / "5일"처럼 표기 */
+export function duration(start: Date, end: Date): string {
+  const days = Math.round((end.getTime() - start.getTime()) / 86400000)
+  return days >= 7 && days % 7 === 0 ? `${days / 7}주` : `${days}일`
 }

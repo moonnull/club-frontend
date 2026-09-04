@@ -1,4 +1,5 @@
 'use client'
+import { X } from 'lucide-react'
 import { createContext, useCallback, useContext, useRef, useState } from 'react'
 
 export type ToastVariant = 'info' | 'error'
@@ -59,7 +60,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
               aria-label="알림 닫기"
               className="shrink-0 opacity-60 hover:opacity-100 transition"
             >
-              ✕
+              <X aria-hidden="true" className="size-4" />
             </button>
           </div>
         ))}

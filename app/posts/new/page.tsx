@@ -7,6 +7,7 @@ import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import RichTextEditor from '@/components/RichTextEditor'
 import type { BoardCategory, UploadResult, User } from '@/lib/types'
+import { X } from 'lucide-react'
 
 export default function NewPostPage() {
   const router = useRouter()
@@ -63,9 +64,10 @@ export default function NewPostPage() {
         <button
           type="button"
           onClick={() => router.push('/posts')}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white panel rounded-lg px-3 py-1.5 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white panel rounded-lg px-3 py-1.5 transition"
         >
-          ✕ 작성 취소
+          <X aria-hidden="true" className="size-3.5" />
+          작성 취소
         </button>
       </div>
 

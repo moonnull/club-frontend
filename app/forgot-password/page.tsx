@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { getSecurityQuestion, verifySecurityAnswer } from '@/lib/api/auth'
+import { ArrowLeft } from 'lucide-react'
 
 const GENERIC_ERROR =
   '등록된 보안 질문을 찾을 수 없습니다. 이메일을 다시 확인하시거나 관리자에게 문의해주세요.'
@@ -118,9 +119,10 @@ export default function ForgotPasswordPage() {
                     setAnswer('')
                     setError('')
                   }}
-                  className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition"
+                  className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition"
                 >
-                  ← 이메일 다시 입력
+                  <ArrowLeft aria-hidden="true" className="size-3.5" />
+                  이메일 다시 입력
                 </button>
                 <button
                   type="submit"

@@ -68,6 +68,9 @@ export interface AssignmentFile extends UploadResult {
   id: number
 }
 
+/** null = 미제출, DRAFT = 임시저장만 함, FINAL = 최종 제출 완료 */
+export type SubmissionStatus = 'DRAFT' | 'FINAL'
+
 export interface AssignmentListItem {
   id: number
   title: string
@@ -76,6 +79,10 @@ export interface AssignmentListItem {
   created_at: string
   author: User
   track?: Track | null
+  file_count: number
+  /** 목록을 요청한 사용자 기준 제출 상태 */
+  submission_status: SubmissionStatus | null
+  submission_grade: Grade | null
 }
 
 export interface Assignment extends AssignmentListItem {

@@ -41,6 +41,7 @@ import type {
 } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { ArrowLeft, Check, GripVertical } from 'lucide-react'
 
 const GRADE_LABEL: Record<string, string> = { PASS: '합격', FAIL: '불합격' }
 const GRADE_COLOR: Record<string, string> = {
@@ -158,7 +159,8 @@ function SubmissionCard({
             onClick={onBack}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition mb-3"
           >
-            ← 목록으로
+            <ArrowLeft aria-hidden="true" className="size-3.5" />
+            목록으로
           </button>
         )}
         <div className="flex items-center gap-2 mb-2">
@@ -404,7 +406,8 @@ function QuestionCard({
           onClick={onBack}
           className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition mb-3"
         >
-          ← 목록으로
+          <ArrowLeft aria-hidden="true" className="size-3.5" />
+          목록으로
         </button>
 
         <div className="flex items-center gap-2 mb-2">
@@ -747,7 +750,7 @@ export default function AssignmentDetailPage() {
         aria-label="좌우 영역 너비 조절"
         className="w-1.5 shrink-0 cursor-col-resize bg-gray-100 dark:bg-[#0f0f0f] hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center transition"
       >
-        <span aria-hidden="true" className="text-gray-400 text-xs select-none">⋮</span>
+        <GripVertical aria-hidden="true" className="size-3 text-gray-400" />
       </div>
 
       {/* ── 오른쪽: 제출 작성 / 제출 현황 / 질문 (전부 이 패널 안에서만 전환) ── */}
@@ -808,7 +811,7 @@ export default function AssignmentDetailPage() {
               <div className="flex flex-col h-full gap-3">
                 {mySubmission?.is_final && (
                   <div className="flex items-center justify-between shrink-0">
-                    <p className="text-sm text-green-500">✓ 이미 최종 제출했습니다. 마감 전까지는 다시 수정할 수 있습니다.</p>
+                    <p className="text-sm text-green-500 inline-flex items-center gap-1.5"><Check aria-hidden="true" className="size-4 shrink-0" />이미 최종 제출했습니다. 마감 전까지는 다시 수정할 수 있습니다.</p>
                     <button
                       onClick={() => setEditingOwn(false)}
                       className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition shrink-0"
@@ -929,7 +932,8 @@ export default function AssignmentDetailPage() {
                 onClick={() => setQuestionView('list')}
                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition shrink-0 self-start"
               >
-                ← 목록으로
+                <ArrowLeft aria-hidden="true" className="size-3.5" />
+                목록으로
               </button>
               <input
                 value={questionTitle}

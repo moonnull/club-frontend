@@ -8,6 +8,7 @@ import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import { toDate } from '@/lib/formatDeadline'
 import type { Assignment, Track, UploadResult, User } from '@/lib/types'
+import { X } from 'lucide-react'
 
 function toLocalInput(iso: string): string {
   const d = toDate(iso)
@@ -108,9 +109,10 @@ export default function EditAssignmentPage() {
         <button
           type="button"
           onClick={() => router.push(`/assignments/${id}`)}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
         >
-          ✕ 작성 취소
+          <X aria-hidden="true" className="size-3.5" />
+          작성 취소
         </button>
       </div>
 
