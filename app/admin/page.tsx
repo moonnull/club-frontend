@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   approveUser,
-  assignUserTrack,
+  assignUserTracks,
   deleteUser,
   listUsers,
   resetUserPassword,
@@ -17,6 +17,7 @@ import { getStoredUser, saveAuth } from '@/lib/session'
 import type { BoardCategory, Track, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
+import TrackMultiSelect from '@/components/TrackMultiSelect'
 
 export default function AdminPage() {
   const toast = useToast()
@@ -125,9 +126,9 @@ export default function AdminPage() {
     }
   }
 
-  async function changeTrack(user: User, trackId: string) {
+  async function changeTracks(user: User, trackIds: number[]) {
     try {
-      await assignUserTrack(user.id, trackId ? Number(trackId) : null)
+      await assignUserTracks(user.id, trackIds)
       load()
     } catch (err: unknown) {
       toast(errorMessage(err), 'error')
@@ -310,18 +311,11 @@ export default function AdminPage() {
                     </p>
                   </div>
                   <div className="flex gap-2 items-center">
-                    <select
-                      value={u.track?.id ?? ''}
-                      onChange={(e) => changeTrack(u, e.target.value)}
-                      className="text-sm bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                    >
-                      <option value="">트랙 미배정</option>
-                      {tracks.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
+                    <TrackMultiSelect
+                      tracks={tracks}
+                      selected={(u.tracks ?? []).map((t) => t.id)}
+                      onChange={(ids) => changeTracks(u, ids)}
+                    />
                     <button
                       onClick={() => toggleRole(u)}
                       disabled={u.id === me.id}

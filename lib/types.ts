@@ -16,7 +16,8 @@ export interface User {
   is_active: boolean
   created_at: string
   has_security_question: boolean
-  track: Track | null
+  /** 한 사람이 여러 트랙을 동시에 수강할 수 있다. 빈 배열이면 미배정. */
+  tracks: Track[]
 }
 
 export interface BoardCategory {

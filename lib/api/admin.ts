@@ -13,8 +13,8 @@ export function updateUserRole(userId: number, role: 'MEMBER' | 'ADMIN') {
   return api.put<User>(`/api/admin/users/${userId}/role`, { role })
 }
 
-export function assignUserTrack(userId: number, trackId: number | null) {
-  return api.put<User>(`/api/admin/users/${userId}/track`, { track_id: trackId })
+export function assignUserTracks(userId: number, trackIds: number[]) {
+  return api.put<User>(`/api/admin/users/${userId}/track`, { track_ids: trackIds })
 }
 
 export function deleteUser(userId: number) {

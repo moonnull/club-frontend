@@ -74,7 +74,12 @@ export default function ProfilePage() {
           <p>이메일: {me.email}</p>
           <p>학번: {me.student_id}</p>
           <p>{me.generation}기 · {me.part}</p>
-          <p>트랙: {me.track ? me.track.name : '미배정 (관리자에게 문의해주세요)'}</p>
+          <p>
+            트랙:{' '}
+            {me.tracks && me.tracks.length > 0
+              ? me.tracks.map((t) => t.name).join(', ')
+              : '미배정 (관리자에게 문의해주세요)'}
+          </p>
         </div>
 
         <form onSubmit={submit} className="space-y-4">

@@ -14,7 +14,7 @@ import PostHeroBanner from '@/components/PostHeroBanner'
 import type { Comment, Post, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, Paperclip, Pencil } from 'lucide-react'
 
 export default function PostDetailPage() {
   const toast = useToast()
@@ -229,7 +229,8 @@ export default function PostDetailPage() {
                       href={toDownloadUrl(a.url, a.filename)}
                       className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
                     >
-                      📎 {a.filename}
+                      <Paperclip aria-hidden="true" className="size-3.5" />
+                      {a.filename}
                     </a>
                   </li>
                 ))}
@@ -339,7 +340,8 @@ export default function PostDetailPage() {
                   type="submit"
                   className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition"
                 >
-                  ✏️ 작성
+                  <Pencil aria-hidden="true" className="size-3.5" />
+                  작성
                 </button>
               </div>
             </form>

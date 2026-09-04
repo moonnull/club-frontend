@@ -10,6 +10,7 @@ import { realtimeHub } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import type { BoardCategory, Post, User } from '@/lib/types'
+import { MessageSquare } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -169,7 +170,8 @@ export default function PostsPage() {
                   </span>
                   {(p.comment_count ?? 0) > 0 && (
                     <span className="text-gray-500 dark:text-gray-400">
-                      💬 {p.comment_count}
+                      <MessageSquare aria-hidden="true" className="inline size-3 mr-0.5" />
+                      {p.comment_count}
                     </span>
                   )}
                 </div>

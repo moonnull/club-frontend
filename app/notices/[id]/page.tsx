@@ -11,7 +11,7 @@ import { toDate } from '@/lib/formatDeadline'
 import type { Comment, Post, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Paperclip } from 'lucide-react'
 
 export default function NoticeDetailPage() {
   const toast = useToast()
@@ -156,7 +156,8 @@ export default function NoticeDetailPage() {
                     href={toDownloadUrl(a.url, a.filename)}
                     className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
                   >
-                    📎 {a.filename}
+                    <Paperclip aria-hidden="true" className="size-3.5" />
+                    {a.filename}
                   </a>
                 </li>
               ))}

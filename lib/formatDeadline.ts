@@ -43,3 +43,11 @@ export function duration(start: Date, end: Date): string {
   const days = Math.round((end.getTime() - start.getTime()) / 86400000)
   return days >= 7 && days % 7 === 0 ? `${days / 7}주` : `${days}일`
 }
+
+/** 제출 목록/상세의 작성 시각 — "2026-03-20 15:49:30" */
+export function formatTimestamp(iso: string): string {
+  const d = toDate(iso)
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  return `${date} ${time}`
+}

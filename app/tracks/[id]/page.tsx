@@ -14,7 +14,11 @@ import type { AssignmentListItem, Track, User } from '@/lib/types'
 
 export default function TrackDetailPage() {
   const toast = useToast()
-  const isAdmin = getStoredUser<User>()?.role === 'ADMIN'
+  const me = getStoredUser<User>()
+  const isAdmin = me?.role === 'ADMIN'
+  // 수강 중이 아닌 트랙은 URL로 직접 들어와도 막는다. (과제 자체는 서버가
+  // 이미 걸러주지만, 트랙 이름과 커리큘럼 구성까지 보여줄 이유는 없다)
+  const canView = isAdmin || (me?.tracks?.some((t) => t.id === trackId) ?? false)
   const { id } = useParams<{ id: string }>()
   const trackId = Number(id)
   const [track, setTrack] = useState<Track | null>(null)
@@ -67,7 +71,7 @@ export default function TrackDetailPage() {
     return <p className="max-w-3xl mx-auto px-4 py-10 text-sm text-gray-400">불러오는 중...</p>
   }
 
-  if (!track) {
+  if (!track || !canView) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
         <p className="text-sm text-gray-500 dark:text-gray-400">

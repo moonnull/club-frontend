@@ -11,8 +11,11 @@ import type { AssignmentListItem, Track, User } from '@/lib/types'
 
 export default function TracksPage() {
   const toast = useToast()
+  const me = getStoredUser<User>()
   // 관리자는 제출할 일이 없어 제출 진행률이 늘 0이므로, 마감 진행률을 대신 보여준다.
-  const isAdmin = getStoredUser<User>()?.role === 'ADMIN'
+  const isAdmin = me?.role === 'ADMIN'
+  // 예전 세션의 localStorage 캐시에는 tracks가 없을 수 있다.
+  const myTrackIds = me?.tracks?.map((t) => t.id) ?? []
   const [tracks, setTracks] = useState<Track[]>([])
   const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,9 +30,18 @@ export default function TracksPage() {
       .finally(() => setLoading(false))
   }, [toast])
 
+  // 관리자는 전체 트랙을, 회원은 자기가 수강 중인 트랙만 본다.
+  // 과제 목록은 이미 트랙별로 필터링되어 오므로, 남의 트랙을 보여주면
+  // "과제 0개"인 빈 카드만 늘어서 오히려 혼란스럽다.
+  const visibleTracks = useMemo(
+    () => (isAdmin ? tracks : tracks.filter((t) => myTrackIds.includes(t.id))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tracks, isAdmin, myTrackIds.join(',')],
+  )
+
   // 트랙별 요약(과제 수, 전체 기간, 진행률)을 한 번에 계산해 카드에 쓴다.
   const summaries = useMemo(() => {
-    return tracks.map((track) => {
+    return visibleTracks.map((track) => {
       const items = assignments.filter((a) => a.track?.id === track.id)
       const starts = items.map((a) => toDate(a.start_at).getTime())
       const ends = items.map((a) => toDate(a.end_at).getTime())
@@ -46,7 +58,7 @@ export default function TracksPage() {
         done,
       }
     })
-  }, [tracks, assignments, isAdmin])
+  }, [visibleTracks, assignments, isAdmin])
 
   const untracked = assignments.filter((a) => !a.track).length
 
@@ -57,13 +69,19 @@ export default function TracksPage() {
         <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">트랙</h1>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        트랙을 선택하면 해당 과정의 과제를 순서대로 볼 수 있습니다.
+        {isAdmin
+          ? '전체 트랙입니다. 트랙을 선택하면 해당 과정의 과제를 순서대로 볼 수 있습니다.'
+          : '내가 수강 중인 트랙입니다. 선택하면 과제를 순서대로 볼 수 있습니다.'}
       </p>
 
       {loading ? (
         <p className="text-sm text-gray-400">불러오는 중...</p>
       ) : summaries.length === 0 ? (
-        <p className="text-sm text-gray-400">등록된 트랙이 없습니다.</p>
+        <p className="text-sm text-gray-400">
+          {isAdmin
+            ? '등록된 트랙이 없습니다.'
+            : '아직 배정된 트랙이 없습니다. 관리자에게 문의해주세요.'}
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {summaries.map(({ track, count, span, done }) => (

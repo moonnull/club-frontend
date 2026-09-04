@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react'
 import { uploadFile } from '@/lib/api/uploads'
 import type { UploadResult } from '@/lib/types'
-import { X } from 'lucide-react'
+import { Paperclip, X } from 'lucide-react'
 
 const ACCEPT = '.pdf,.zip,.jpg,.jpeg,.png,.gif,.webp'
 
@@ -39,9 +39,10 @@ export default function AttachmentPicker({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
         >
-          📎 {uploading ? '업로드 중...' : '파일 첨부'}
+          <Paperclip aria-hidden="true" className="size-3.5" />
+          {uploading ? '업로드 중...' : '파일 첨부'}
         </button>
         <span className="text-xs text-gray-400">pdf, zip, 이미지 파일만 가능합니다.</span>
       </div>

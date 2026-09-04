@@ -25,8 +25,9 @@ import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import { formatDeadline, isBeforeStart, isPastDeadline, toDate } from '@/lib/formatDeadline'
+import { formatDeadline, formatTimestamp, isBeforeStart, isPastDeadline, toDate } from '@/lib/formatDeadline'
 import { toDownloadUrl } from '@/lib/downloadUrl'
+import { textLength } from '@/lib/richText'
 import type {
   Assignment,
   AssignmentQuestion,
@@ -41,7 +42,7 @@ import type {
 } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
-import { ArrowLeft, Check, GripVertical } from 'lucide-react'
+import { ArrowLeft, Check, Download, GripVertical, MessageSquare, Paperclip, Pencil } from 'lucide-react'
 
 const GRADE_LABEL: Record<string, string> = { PASS: '합격', FAIL: '불합격' }
 const GRADE_COLOR: Record<string, string> = {
@@ -190,7 +191,7 @@ function SubmissionCard({
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
           <span className="font-medium text-gray-600 dark:text-gray-300">{submission.user.name}</span>
           <span>·</span>
-          <span>{toDate(submission.submitted_at ?? submission.created_at).toLocaleString('ko')}</span>
+          <span className="tabular-nums">{formatTimestamp(submission.submitted_at ?? submission.created_at)}</span>
         </div>
 
         {currentUser?.role === 'ADMIN' && (
@@ -236,7 +237,8 @@ function SubmissionCard({
               href={toDownloadUrl(submission.attachment_url, submission.attachment_filename ?? 'attachment')}
               className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
             >
-              📎 {submission.attachment_filename}
+              <Paperclip aria-hidden="true" className="size-3.5" />
+              {submission.attachment_filename}
             </a>
           </div>
         )}
@@ -269,7 +271,8 @@ function SubmissionCard({
                       href={toDownloadUrl(c.attachment_url, c.attachment_filename ?? 'attachment')}
                       className="inline-flex items-center gap-1.5 text-xs text-gray-900 dark:text-white hover:underline mt-1"
                     >
-                      📎 {c.attachment_filename}
+                      <Paperclip aria-hidden="true" className="size-3.5" />
+                      {c.attachment_filename}
                     </a>
                   )}
                 </li>
@@ -291,12 +294,16 @@ function SubmissionCard({
               value={commentFile ? [commentFile] : []}
               onChange={(files) => setCommentFile(files[files.length - 1] ?? null)}
             />
+            <span className="ml-auto shrink-0 text-xs text-gray-400 tabular-nums">
+              {textLength(commentContent)}자
+            </span>
             <button
               onClick={postComment}
               disabled={posting}
               className="shrink-0 flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition disabled:opacity-50"
             >
-              ✏️ 작성
+              <Pencil aria-hidden="true" className="size-3.5" />
+              작성
             </button>
           </div>
         </div>
@@ -480,13 +487,15 @@ function QuestionCard({
             rows={3}
             className="w-full bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-500 transition placeholder-gray-400 dark:placeholder-gray-600"
           />
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-3">
+            <span className="text-xs text-gray-400 tabular-nums">{replyContent.length}자</span>
             <button
               onClick={postReply}
               disabled={posting}
               className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition disabled:opacity-50"
             >
-              ✏️ 답변 작성
+              <Pencil aria-hidden="true" className="size-3.5" />
+              답변 작성
             </button>
           </div>
         </div>
@@ -733,7 +742,8 @@ export default function AssignmentDetailPage() {
                     href={toDownloadUrl(f.url, f.filename)}
                     className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-white hover:underline"
                   >
-                    📥 {f.filename}
+                    <Download aria-hidden="true" className="size-3.5" />
+                    {f.filename}
                   </a>
                 </li>
               ))}
@@ -890,22 +900,25 @@ export default function AssignmentDetailPage() {
                     className="py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04] transition -mx-4 px-4"
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-medium">
+                      <span className="shrink-0 text-xs badge-neutral px-1.5 py-0.5 rounded font-medium">
                         최종제출
                       </span>
                       {s.grade && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${GRADE_COLOR[s.grade]}`}>
+                        <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${GRADE_COLOR[s.grade]}`}>
                           {GRADE_LABEL[s.grade]}
                         </span>
                       )}
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{s.title}</span>
                       {s.comment_count > 0 && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">💬{s.comment_count}</span>
+                        <span className="inline-flex items-center gap-0.5 text-xs text-gray-500 dark:text-gray-400 shrink-0"><MessageSquare aria-hidden="true" className="size-3" />{s.comment_count}</span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>{s.user.name}</span>
-                      <span>{toDate(s.submitted_at ?? s.created_at).toLocaleString('ko')}</span>
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="truncate">{s.user.name}</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="shrink-0 tabular-nums">
+                        {formatTimestamp(s.submitted_at ?? s.created_at)}
+                      </span>
                     </div>
                   </li>
                 ))}
@@ -953,7 +966,8 @@ export default function AssignmentDetailPage() {
                   disabled={postingQuestion}
                   className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-4 py-1.5 rounded-lg hover:opacity-80 transition disabled:opacity-50"
                 >
-                  ✏️ 질문 등록
+                  <Pencil aria-hidden="true" className="size-3.5" />
+                  질문 등록
                 </button>
               </div>
             </div>
@@ -968,7 +982,8 @@ export default function AssignmentDetailPage() {
                   }}
                   className="flex items-center gap-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-80 transition"
                 >
-                  ✏️ 질문 작성
+                  <Pencil aria-hidden="true" className="size-3.5" />
+                  질문 작성
                 </button>
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto">
@@ -993,7 +1008,7 @@ export default function AssignmentDetailPage() {
                           )}
                           <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{q.title}</span>
                           {q.comment_count > 0 && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">💬{q.comment_count}</span>
+                            <span className="inline-flex items-center gap-0.5 text-xs text-gray-500 dark:text-gray-400 shrink-0"><MessageSquare aria-hidden="true" className="size-3" />{q.comment_count}</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-xs text-gray-400">

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { TriangleAlert } from 'lucide-react'
 
 export default function ErrorPage({
   error,
@@ -15,7 +16,7 @@ export default function ErrorPage({
 
   return (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-56px)] px-4 text-center">
-      <p className="text-4xl mb-3">⚠️</p>
+      <TriangleAlert aria-hidden="true" className="size-10 mb-3 text-gray-400" />
       <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">문제가 발생했습니다</h1>
       <p className="text-sm text-gray-400 mb-6">
         예상치 못한 오류가 발생했습니다. 다시 시도해도 계속되면 관리자에게 알려주세요.
