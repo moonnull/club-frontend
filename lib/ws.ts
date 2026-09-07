@@ -1,6 +1,10 @@
+import { clearAuth } from './session'
+
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const RECONNECT_BASE_DELAY_MS = 3000
 const RECONNECT_MAX_DELAY_MS = 30000
+/** 서버가 인증 실패로 닫을 때 쓰는 close code (app/routers/ws_notifications.py와 맞춤) */
+const WS_UNAUTHORIZED = 4401
 
 function wsUrl(token: string): string {
   const wsBase = BASE.replace(/^http/, 'ws')
@@ -30,6 +34,14 @@ class RealtimeHub {
 
   connect(token: string): void {
     if (this.token === token && this.socket) return
+    // 토큰이 바뀌었으면 예전 소켓을 반드시 닫는다. 그냥 두면 옛 토큰을 쥔
+    // 소켓이 살아남아 계속 재연결을 시도한다.
+    if (this.socket) {
+      this.socket.onclose = null
+      this.socket.close()
+      this.socket = null
+    }
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     this.token = token
     this.reconnectAttempts = 0
     this.open()
@@ -62,9 +74,23 @@ class RealtimeHub {
       }
     }
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       if (this.token === null) return
       this.setStatus('disconnected')
+
+      // 인증 실패는 재시도해도 절대 성공하지 않는다. 계속 두드리면 서버 로그만
+      // 쌓이고 사용자는 아무것도 모른 채 실시간 갱신을 못 받는다.
+      // (비밀번호 변경이나 서버 키 교체로 기존 토큰이 무효가 된 경우)
+      if (event.code === WS_UNAUTHORIZED) {
+        this.token = null
+        this.socket = null
+        clearAuth()
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?reason=expired'
+        }
+        return
+      }
+
       const delay = Math.min(
         RECONNECT_BASE_DELAY_MS * 2 ** this.reconnectAttempts,
         RECONNECT_MAX_DELAY_MS
