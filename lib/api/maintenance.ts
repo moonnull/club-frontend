@@ -65,3 +65,42 @@ export function listOldNotifications(days: number) {
 export function cleanupOldNotifications(days: number) {
   return api.post<CleanupResult>(`${BASE}/old-notifications/cleanup?days=${days}`, {})
 }
+
+/** 현황에서 직접 확인·선택 삭제하는 행 (알림/캘린더) */
+export interface NotificationRow {
+  id: number
+  message: string
+  link: string | null
+  is_read: boolean
+  created_at: string
+  recipient_name: string
+}
+
+export interface CalendarRow {
+  id: number
+  title: string
+  item_date: string
+  is_done: boolean
+  author_name: string
+}
+
+export interface RowPage<T> {
+  rows: T[]
+  total: number
+}
+
+export function listAllNotifications(limit = 50, offset = 0) {
+  return api.get<RowPage<NotificationRow>>(`${BASE}/notifications?limit=${limit}&offset=${offset}`)
+}
+
+export function deleteNotificationsByIds(ids: number[]) {
+  return api.post<CleanupResult>(`${BASE}/notifications/delete`, { ids })
+}
+
+export function listAllCalendarItems(limit = 50, offset = 0) {
+  return api.get<RowPage<CalendarRow>>(`${BASE}/calendar-items?limit=${limit}&offset=${offset}`)
+}
+
+export function deleteCalendarItemsByIds(ids: number[]) {
+  return api.post<CleanupResult>(`${BASE}/calendar-items/delete`, { ids })
+}
