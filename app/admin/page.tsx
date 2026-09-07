@@ -1,4 +1,6 @@
 'use client'
+import Link from 'next/link'
+import { Database } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -307,7 +309,16 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">회원 관리</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">회원 관리</h1>
+        <Link
+          href="/admin/data"
+          className="btn-secondary inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
+        >
+          <Database aria-hidden="true" className="size-4" />
+          데이터 정리
+        </Link>
+      </div>
 
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
