@@ -40,10 +40,16 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
-    // 로그인 요청 자체의 401(자격증명 오류)은 세션 만료가 아니므로 제외한다.
-    if (res.status === 401 && tok && path !== '/api/auth/login') {
+    // 401은 세션이 끝났다는 뜻이다. 토큰 유무로 거르면 안 된다 — 다른 탭에서
+    // 로그아웃해 토큰이 이미 지워진 경우가 정확히 그 상황인데, 그때 리다이렉트가
+    // 걸리지 않아 에러 토스트만 반복되며 화면에 갇힌다.
+    // 로그인 요청 자체의 401(자격증명 오류)만 세션 만료가 아니므로 제외한다.
+    if (res.status === 401 && path !== '/api/auth/login') {
       clearAuth()
-      window.location.href = '/login?reason=expired'
+      // "세션이 만료되었다"는 안내는 실제로 토큰을 보냈을 때만 맞는 말이다.
+      // 토큰 없이 받은 401(로그아웃 직후 남은 요청 등)까지 그렇게 알리면
+      // 겪지도 않은 만료를 겪었다고 하는 셈이다.
+      window.location.href = tok ? '/login?reason=expired' : '/login'
     }
     throw new Error(detailOf(data) ?? statusMessage(res.status))
   }
