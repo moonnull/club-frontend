@@ -730,9 +730,17 @@ export default function AssignmentDetailPage() {
   const submissionsEmptyMessage = '아직 제출한 사람이 없습니다.'
 
   return (
-    <div ref={containerRef} className="flex h-full">
+    // 모바일: 과제 내용 아래에 제출/질문 패널이 쌓이고 페이지가 통째로 스크롤된다.
+    // 데스크톱: 좌우로 나누고 가운데 분할선으로 너비를 조절한다.
+    // 분할 비율은 CSS 변수로 넘긴다 — 인라인 width를 그대로 쓰면 모바일에서도
+    // 그 값이 이겨서 화면이 잘린다.
+    <div
+      ref={containerRef}
+      style={{ '--split': `${splitPercent}%` } as React.CSSProperties}
+      className="flex flex-col md:flex-row md:h-full"
+    >
       {/* ── 가운데: 과제 내용 ── */}
-      <div style={{ width: `${splitPercent}%` }} className="min-w-0 overflow-y-auto px-8 py-6">
+      <div className="w-full md:w-[var(--split)] md:shrink-0 min-w-0 md:overflow-y-auto px-4 md:px-8 py-6">
         {/* 이 과제가 누구에게 열려 있는지 — 플랜·트랙 둘 다 없으면 전원 공개다. */}
         <div className="flex flex-wrap items-center gap-1.5 mb-2">
           <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium badge-neutral">
@@ -792,13 +800,13 @@ export default function AssignmentDetailPage() {
         role="separator"
         aria-orientation="vertical"
         aria-label="좌우 영역 너비 조절"
-        className="w-1.5 shrink-0 cursor-col-resize bg-gray-100 dark:bg-[#0f0f0f] hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center transition"
+        className="w-1.5 shrink-0 cursor-col-resize bg-gray-100 dark:bg-[#0f0f0f] hover:bg-gray-300 dark:hover:bg-gray-700 hidden md:flex items-center justify-center transition"
       >
         <GripVertical aria-hidden="true" className="size-3 text-gray-400" />
       </div>
 
       {/* ── 오른쪽: 제출 작성 / 제출 현황 / 질문 (전부 이 패널 안에서만 전환) ── */}
-      <div style={{ width: `${100 - splitPercent}%` }} className="min-w-0 flex flex-col border-l border-gray-200 dark:border-gray-800">
+      <div className="w-full md:flex-1 min-w-0 flex flex-col border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <button
             onClick={() => setRightTab('write')}

@@ -117,7 +117,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
 
   if (collapsed) {
     return (
-      <div className="flex h-[calc(100vh-56px)]">
+      <div className="flex md:h-[calc(100vh-56px)]">
         <div className="shrink-0 border-r border-gray-200 dark:border-gray-800 surface px-2 py-3">
           <button
             onClick={() => setCollapsed(false)}
@@ -128,14 +128,16 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
             <ArrowRightFromLine aria-hidden="true" className="size-4" />
           </button>
         </div>
-        <div className="flex-1 min-w-0 overflow-y-auto">{children}</div>
+        <div className="flex-1 min-w-0 md:overflow-y-auto">{children}</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-[calc(100vh-56px)]">
-      <aside className="w-[300px] shrink-0 border-r border-gray-200 dark:border-gray-800 surface flex flex-col overflow-hidden">
+    // 모바일에서는 목록과 본문을 세로로 쌓고 페이지 전체가 스크롤된다.
+    // 데스크톱에서만 화면 높이에 맞춰 좌우로 나누고 각 칸이 따로 스크롤된다.
+    <div className="flex flex-col md:flex-row md:h-[calc(100vh-56px)]">
+      <aside className="w-full md:w-[300px] shrink-0 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800 surface flex flex-col md:overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-bold text-gray-900 dark:text-white">과제</h2>
@@ -154,7 +156,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
                 onClick={() => setCollapsed(true)}
                 aria-label="과제 목록 접기"
                 title="과제 목록 접기"
-                className="btn-secondary rounded-lg p-2 inline-flex items-center justify-center"
+                className="btn-secondary rounded-lg p-2 hidden md:inline-flex items-center justify-center"
               >
                 <ArrowLeftFromLine aria-hidden="true" className="size-4" />
               </button>
@@ -165,7 +167,9 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
           <FilterChips label="트랙" options={trackFilters} value={trackKey} onChange={setTrackKey} />
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+        {/* 모바일에서 목록이 화면을 다 차지하면 본문이 한참 아래로 밀린다.
+            높이를 제한해 목록은 훑고 본문으로 바로 내려갈 수 있게 한다. */}
+        <nav className="flex-1 max-h-[38vh] md:max-h-none overflow-y-auto p-4 flex flex-col gap-3">
           {loading ? (
             <p className="text-xs text-gray-400">불러오는 중...</p>
           ) : visible.length === 0 ? (
@@ -188,7 +192,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
         </nav>
       </aside>
 
-      <div className="flex-1 min-w-0 overflow-y-auto">{children}</div>
+      <div className="flex-1 min-w-0 md:overflow-y-auto">{children}</div>
     </div>
   )
 }

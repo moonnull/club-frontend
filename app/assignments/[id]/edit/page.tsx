@@ -121,7 +121,7 @@ export default function EditAssignmentPage() {
 
   return (
     <form onSubmit={submit} className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+      <div className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
         <h1 className="text-xl font-bold brand-text">과제 수정</h1>
         <button
           type="button"
@@ -133,7 +133,7 @@ export default function EditAssignmentPage() {
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col gap-3 px-8 py-5">
+      <div className="flex-1 min-h-0 flex flex-col gap-3 px-4 md:px-8 py-5">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -142,7 +142,7 @@ export default function EditAssignmentPage() {
           className="w-full panel text-xl font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-400 transition shrink-0"
         />
 
-        <div className="flex gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
           <label className="flex-1 text-xs text-gray-400">
             제출 시작
             <input
@@ -165,7 +165,7 @@ export default function EditAssignmentPage() {
           </label>
         </div>
 
-        <div className="flex gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
           <select
             value={trackId}
             onChange={(e) => setTrackId(e.target.value)}
