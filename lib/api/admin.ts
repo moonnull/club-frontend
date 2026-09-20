@@ -39,3 +39,23 @@ export function resetUserPassword(userId: number) {
 export function sendNotification(userId: number, message: string) {
   return api.post<Notification>(`/api/admin/users/${userId}/notifications`, { message })
 }
+
+export interface BulkAssignResult {
+  updated: number
+}
+
+/** 여러 회원에게 같은 플랜을 한 번에 배정한다. planId가 null이면 배정 해제. */
+export function assignPlanToUsers(userIds: number[], planId: number | null) {
+  return api.post<BulkAssignResult>('/api/admin/users/bulk/plan', {
+    user_ids: userIds,
+    plan_id: planId,
+  })
+}
+
+/** 여러 회원에게 같은 트랙 구성을 한 번에 배정한다 (기존 구성은 대체된다). */
+export function assignTracksToUsers(userIds: number[], trackIds: number[]) {
+  return api.post<BulkAssignResult>('/api/admin/users/bulk/tracks', {
+    user_ids: userIds,
+    track_ids: trackIds,
+  })
+}

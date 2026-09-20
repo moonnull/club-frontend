@@ -16,12 +16,15 @@ import {
   listOrphanFiles,
   listAllNotifications,
   listAllCalendarItems,
+  listAllPosts,
   deleteNotificationsByIds,
   deleteCalendarItemsByIds,
+  deletePostsByIds,
   type CalendarRow,
   type MaintenanceNotification,
   type NotificationRow,
   type OrphanFile,
+  type PostRow,
 } from '@/lib/api/maintenance'
 import { formatTimestamp } from '@/lib/formatDeadline'
 import SelectableRows from '@/components/SelectableRows'
@@ -52,7 +55,10 @@ function mb(bytes: number): string {
 // 관리자가 전체를 볼 화면이 따로 없는 테이블만 여기서 펼쳐본다.
 // 회원·게시글·과제 등은 각자 전용 관리 화면에서 지워야 첨부 파일·알림
 // 정리 같은 후속 처리가 함께 돈다.
-const BROWSABLE = new Set(['notifications', 'calendar_items'])
+// 현황 카드를 눌러 목록을 펼칠 수 있는 테이블.
+// 게시글은 /posts에도 있지만 게시판별로 흩어져 있어, 오래된 테스트 글처럼
+// "어느 게시판에 남겼는지 기억나지 않는 글"은 여기서 찾는 게 빠르다.
+const BROWSABLE = new Set(['posts', 'notifications', 'calendar_items'])
 const ROWS_PER_PAGE = 50
 
 export default function AdminDataPage() {
@@ -74,6 +80,7 @@ export default function AdminDataPage() {
   const [openTable, setOpenTable] = useState<string | null>(null)
   const [notiRows, setNotiRows] = useState<{ rows: NotificationRow[]; total: number } | null>(null)
   const [calRows, setCalRows] = useState<{ rows: CalendarRow[]; total: number } | null>(null)
+  const [postRows, setPostRows] = useState<{ rows: PostRow[]; total: number } | null>(null)
 
   useEffect(() => {
     if (!getStoredUser<User>()) {
@@ -120,7 +127,9 @@ export default function AdminDataPage() {
       return
     }
     setOpenTable(table)
-    if (table === 'notifications') {
+    if (table === 'posts') {
+      await run('browse', () => listAllPosts(ROWS_PER_PAGE), (r) => setPostRows(r))
+    } else if (table === 'notifications') {
       await run('browse', () => listAllNotifications(ROWS_PER_PAGE), (r) => setNotiRows(r))
     } else if (table === 'calendar_items') {
       await run('browse', () => listAllCalendarItems(ROWS_PER_PAGE), (r) => setCalRows(r))
@@ -136,13 +145,16 @@ export default function AdminDataPage() {
     if (!confirmed) return
     try {
       const r =
-        table === 'notifications'
-          ? await deleteNotificationsByIds(ids)
-          : await deleteCalendarItemsByIds(ids)
+        table === 'posts'
+          ? await deletePostsByIds(ids)
+          : table === 'notifications'
+            ? await deleteNotificationsByIds(ids)
+            : await deleteCalendarItemsByIds(ids)
       toast(`${r.deleted}건을 삭제했습니다.`)
       refreshStats()
       // 목록을 다시 불러와 방금 지운 것이 남아 보이지 않게 한다.
-      if (table === 'notifications') setNotiRows(await listAllNotifications(ROWS_PER_PAGE))
+      if (table === 'posts') setPostRows(await listAllPosts(ROWS_PER_PAGE))
+      else if (table === 'notifications') setNotiRows(await listAllNotifications(ROWS_PER_PAGE))
       else setCalRows(await listAllCalendarItems(ROWS_PER_PAGE))
     } catch (err: unknown) {
       toast(errorMessage(err), 'error')
@@ -222,12 +234,36 @@ export default function AdminDataPage() {
             {openTable && (
               <div className="panel rounded-xl p-4 mt-3">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {openTable === 'notifications'
-                    ? '모든 회원이 받은 알림입니다. 알림 벨에는 본인 것만 보이므로 여기서만 전체를 볼 수 있습니다.'
-                    : '모든 캘린더 항목입니다. 캘린더 화면은 보고 있는 달만 조회하므로 여기서만 전체를 볼 수 있습니다.'}
+                  {openTable === 'posts'
+                    ? '게시판 구분 없는 전체 글입니다. 삭제하면 첨부 파일과 관련 알림도 함께 정리됩니다.'
+                    : openTable === 'notifications'
+                      ? '모든 회원이 받은 알림입니다. 알림 벨에는 본인 것만 보이므로 여기서만 전체를 볼 수 있습니다.'
+                      : '모든 캘린더 항목입니다. 캘린더 화면은 보고 있는 달만 조회하므로 여기서만 전체를 볼 수 있습니다.'}
                 </p>
                 {busy === 'browse' ? (
                   <p className="mt-3 text-sm text-gray-400">불러오는 중...</p>
+                ) : openTable === 'posts' && postRows ? (
+                  <SelectableRows
+                    rows={postRows.rows}
+                    total={postRows.total}
+                    emptyMessage="게시글이 없습니다."
+                    onDelete={(ids) => deleteSelected('posts', ids)}
+                    renderRow={(post) => (
+                      <>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                          {post.title}
+                          {post.comment_count > 0 && (
+                            <span className="ml-1.5 text-[10px] badge-neutral px-1.5 py-0.5 rounded">
+                              댓글 {post.comment_count}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {post.board_name} · {post.author_name} · {formatTimestamp(post.created_at)}
+                        </p>
+                      </>
+                    )}
+                  />
                 ) : openTable === 'notifications' && notiRows ? (
                   <SelectableRows
                     rows={notiRows.rows}

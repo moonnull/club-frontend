@@ -5,3 +5,6 @@ node_modules/
 .DS_Store
 out/
 tsconfig.tsbuildinfo
+
+# macOS 동기화 도구가 만드는 중복본 ("파일 2.ts")
+* 2.*

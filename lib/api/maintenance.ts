@@ -84,6 +84,16 @@ export interface CalendarRow {
   author_name: string
 }
 
+export interface PostRow {
+  id: number
+  title: string
+  board_type: string
+  board_name: string
+  created_at: string
+  comment_count: number
+  author_name: string
+}
+
 export interface RowPage<T> {
   rows: T[]
   total: number
@@ -103,4 +113,12 @@ export function listAllCalendarItems(limit = 50, offset = 0) {
 
 export function deleteCalendarItemsByIds(ids: number[]) {
   return api.post<CleanupResult>(`${BASE}/calendar-items/delete`, { ids })
+}
+
+export function listAllPosts(limit = 50, offset = 0) {
+  return api.get<RowPage<PostRow>>(`${BASE}/posts?limit=${limit}&offset=${offset}`)
+}
+
+export function deletePostsByIds(ids: number[]) {
+  return api.post<CleanupResult>(`${BASE}/posts/delete`, { ids })
 }

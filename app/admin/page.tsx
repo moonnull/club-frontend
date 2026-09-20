@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   approveUser,
+  assignPlanToUsers,
+  assignTracksToUsers,
   assignUserPlan,
   assignUserTracks,
   updateUserPenalty,
@@ -26,6 +28,21 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import TrackMultiSelect from '@/components/TrackMultiSelect'
 import PenaltyStepper from '@/components/PenaltyStepper'
 
+type SortKey = 'name' | 'generation' | 'created'
+type UnassignedFilter = 'ALL' | 'NO_PLAN' | 'NO_TRACK'
+
+const SORT_LABEL: Record<SortKey, string> = {
+  name: '이름순',
+  generation: '기수순',
+  created: '가입순',
+}
+
+const UNASSIGNED_LABEL: Record<UnassignedFilter, string> = {
+  ALL: '전체',
+  NO_PLAN: '플랜 미배정',
+  NO_TRACK: '트랙 미배정',
+}
+
 export default function AdminPage() {
   const toast = useToast()
   const confirm = useConfirm()
@@ -43,6 +60,17 @@ export default function AdminPage() {
   const [newBoard, setNewBoard] = useState({ key: '', name: '', admin_only: false })
   const [newTrack, setNewTrack] = useState({ key: '', name: '' })
   const [newPlan, setNewPlan] = useState({ key: '', name: '' })
+
+  // 회원 목록 찾기 도구. 가입순으로만 늘어놓으면 배정할 사람을 눈으로 찾아야 해서
+  // 인원이 늘수록 시간이 급격히 늘어난다.
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [unassigned, setUnassigned] = useState<UnassignedFilter>('ALL')
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
+  // TrackMultiSelect는 체크할 때마다 onChange를 쏜다. 일괄 배정에서는 그때마다
+  // 확인 창이 떠서 트랙을 두 개 고를 수가 없으므로, 선택을 모았다가 적용한다.
+  const [bulkTrackIds, setBulkTrackIds] = useState<number[]>([])
 
   useEffect(() => {
     if (!getStoredUser<User>()) {
@@ -306,7 +334,99 @@ export default function AdminPage() {
   if (!me || me.role !== 'ADMIN') return null
 
   const pending = users.filter((u) => !u.is_active)
-  const approved = users.filter((u) => u.is_active)
+
+  // 검색 → 미배정 필터 → 정렬 순으로 좁힌다.
+  const approved = users
+    .filter((u) => u.is_active)
+    .filter((u) => {
+      if (!search.trim()) return true
+      const q = search.trim().toLowerCase()
+      return (
+        u.name.toLowerCase().includes(q) ||
+        u.student_id.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+      )
+    })
+    .filter((u) => {
+      if (unassigned === 'NO_PLAN') return !u.plan
+      if (unassigned === 'NO_TRACK') return (u.tracks ?? []).length === 0
+      return true
+    })
+    .sort((a, b) => {
+      // 한글 이름은 코드포인트 순서가 가나다순과 다르므로 로케일 비교를 쓴다.
+      if (sortKey === 'name') return a.name.localeCompare(b.name, 'ko')
+      if (sortKey === 'generation') {
+        return b.generation - a.generation || a.name.localeCompare(b.name, 'ko')
+      }
+      return b.created_at.localeCompare(a.created_at)
+    })
+
+  // 화면에 보이지 않는 사람이 선택에 남아 있으면, 일괄 배정이 의도치 않은
+  // 대상까지 건드린다. 보이는 목록으로 항상 교집합을 잡는다.
+  const visibleSelectedIds = approved.filter((u) => selectedIds.has(u.id)).map((u) => u.id)
+
+  function toggleSelected(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    const allChecked = approved.length > 0 && approved.every((u) => selectedIds.has(u.id))
+    setSelectedIds(allChecked ? new Set() : new Set(approved.map((u) => u.id)))
+  }
+
+  async function bulkPlan(planId: number | null) {
+    const ids = visibleSelectedIds
+    if (ids.length === 0) return
+    const label = planId === null ? '플랜 배정 해제' : plans.find((p) => p.id === planId)?.name
+    const confirmed = await confirm({
+      message: `선택한 ${ids.length}명을 ${label}(으)로 변경할까요?`,
+      confirmLabel: '변경',
+    })
+    if (!confirmed) return
+    setBulkBusy(true)
+    try {
+      const r = await assignPlanToUsers(ids, planId)
+      toast(`${r.updated}명의 플랜을 변경했습니다.`)
+      setSelectedIds(new Set())
+      load()
+    } catch (err: unknown) {
+      toast(errorMessage(err), 'error')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function bulkTracks(trackIds: number[]) {
+    const ids = visibleSelectedIds
+    if (ids.length === 0) return
+    const names = tracks.filter((t) => trackIds.includes(t.id)).map((t) => t.name)
+    const confirmed = await confirm({
+      // 트랙은 "추가"가 아니라 "대체"라서, 기존 구성이 사라진다는 걸 분명히 알린다.
+      message:
+        names.length === 0
+          ? `선택한 ${ids.length}명의 트랙 배정을 모두 해제할까요?`
+          : `선택한 ${ids.length}명의 트랙을 ${names.join(', ')}(으)로 바꿉니다.\n기존 트랙 배정은 대체됩니다.`,
+      confirmLabel: '변경',
+    })
+    if (!confirmed) return
+    setBulkBusy(true)
+    try {
+      const r = await assignTracksToUsers(ids, trackIds)
+      toast(`${r.updated}명의 트랙을 변경했습니다.`)
+      setSelectedIds(new Set())
+      setBulkTrackIds([])
+      load()
+    } catch (err: unknown) {
+      toast(errorMessage(err), 'error')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -369,16 +489,128 @@ export default function AdminPage() {
           </section>
 
           <section className="mb-10">
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
-              전체 회원 ({approved.length})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                전체 회원 ({approved.length}
+                {approved.length !== users.filter((u) => u.is_active).length &&
+                  ` / ${users.filter((u) => u.is_active).length}`}
+                )
+              </h2>
+              <button
+                onClick={toggleSelectAll}
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+              >
+                {approved.length > 0 && approved.every((u) => selectedIds.has(u.id))
+                  ? '전체 해제'
+                  : '보이는 전체 선택'}
+              </button>
+            </div>
+
+            {/* 찾기 도구 — 이름으로 검색하거나 미배정만 걸러내면, 배정할 사람을
+                가입순 목록에서 눈으로 찾을 필요가 없다. */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="이름 · 학번 · 이메일 검색"
+                className="flex-1 min-w-[180px] field"
+              />
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                aria-label="정렬 기준"
+                className="field"
+              >
+                {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
+                  <option key={k} value={k}>
+                    {SORT_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={unassigned}
+                onChange={(e) => setUnassigned(e.target.value as UnassignedFilter)}
+                aria-label="배정 상태 필터"
+                className="field"
+              >
+                {(Object.keys(UNASSIGNED_LABEL) as UnassignedFilter[]).map((k) => (
+                  <option key={k} value={k}>
+                    {UNASSIGNED_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 일괄 배정 — 선택한 사람이 있을 때만 나타난다. */}
+            {visibleSelectedIds.length > 0 && (
+              <div className="panel rounded-xl px-4 py-3 mb-3 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {visibleSelectedIds.length}명 선택됨
+                </span>
+                <select
+                  value=""
+                  disabled={bulkBusy}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v === '') return
+                    bulkPlan(v === 'NONE' ? null : Number(v))
+                    e.target.value = ''
+                  }}
+                  aria-label="선택한 회원 플랜 일괄 배정"
+                  className="field"
+                >
+                  <option value="">플랜 일괄 배정...</option>
+                  {plans.map((pl) => (
+                    <option key={pl.id} value={pl.id}>
+                      {pl.name}
+                    </option>
+                  ))}
+                  <option value="NONE">배정 해제</option>
+                </select>
+                <TrackMultiSelect
+                  tracks={tracks}
+                  selected={bulkTrackIds}
+                  onChange={setBulkTrackIds}
+                  disabled={bulkBusy}
+                />
+                <button
+                  onClick={() => bulkTracks(bulkTrackIds)}
+                  disabled={bulkBusy}
+                  className="btn-secondary text-sm px-3 py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  트랙 적용
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition ml-auto"
+                >
+                  선택 해제
+                </button>
+              </div>
+            )}
+
+            {approved.length === 0 ? (
+              <p className="text-sm text-gray-400">조건에 맞는 회원이 없습니다.</p>
+            ) : (
             <div className="space-y-2">
               {approved.map((u) => (
                 <div
                   key={u.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
+                  className={`flex items-center justify-between bg-white dark:bg-[#0f0f0f] border rounded-xl px-4 py-3 transition ${
+                    selectedIds.has(u.id)
+                      ? 'border-gray-900 dark:border-white'
+                      : 'border-gray-200 dark:border-gray-800'
+                  }`}
                 >
-                  <div>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(u.id)}
+                      onChange={() => toggleSelected(u.id)}
+                      aria-label={`${u.name} 선택`}
+                      className="size-4 shrink-0 accent-gray-900 dark:accent-white"
+                    />
+                    <div className="min-w-0">
                     <p className="font-medium text-gray-800 dark:text-gray-100">
                       {u.name} <span className="text-gray-400 font-normal">· {u.student_id}</span>
                       {u.role !== 'MEMBER' && (
@@ -390,6 +622,7 @@ export default function AdminPage() {
                     <p className="text-xs text-gray-400">
                       {u.email} · {u.generation}기 · {u.part}
                     </p>
+                    </div>
                   </div>
                   <div className="flex gap-2 items-center flex-wrap justify-end">
                     <PenaltyStepper
@@ -456,6 +689,7 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+            )}
           </section>
 
           <section>
