@@ -16,11 +16,12 @@ export default function TrackDetailPage() {
   const toast = useToast()
   const me = getStoredUser<User>()
   const isAdmin = me?.role === 'ADMIN'
-  // 수강 중이 아닌 트랙은 URL로 직접 들어와도 막는다. (과제 자체는 서버가
-  // 이미 걸러주지만, 트랙 이름과 커리큘럼 구성까지 보여줄 이유는 없다)
-  const canView = isAdmin || (me?.tracks?.some((t) => t.id === trackId) ?? false)
   const { id } = useParams<{ id: string }>()
   const trackId = Number(id)
+  // 수강 중이 아닌 트랙은 URL로 직접 들어와도 막는다. (과제 자체는 서버가
+  // 이미 걸러주지만, 트랙 이름과 커리큘럼 구성까지 보여줄 이유는 없다)
+  // trackId를 읽으므로 반드시 그 선언 뒤에 와야 한다.
+  const canView = isAdmin || (me?.tracks?.some((t) => t.id === trackId) ?? false)
   const [track, setTrack] = useState<Track | null>(null)
   const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
   const [loading, setLoading] = useState(true)
