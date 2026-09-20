@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      # 타입 오류는 빌드에서도 걸리지만, 먼저 돌려야 실패 원인이 명확하다.
+      - name: 타입 검사
+        run: npx tsc --noEmit
+
+      # 현재 경고 15건(react-hooks/exhaustive-deps)은 고치면 동작이 바뀔 수 있어
+      # 남겨 두었다. next lint는 에러에서만 실패하므로, 새 에러만 차단된다.
+      - name: 린트
+        run: npm run lint
+
+      - name: 빌드
+        run: npm run build
