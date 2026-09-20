@@ -92,6 +92,8 @@ export interface AssignmentListItem {
   created_at: string
   author: User
   track?: Track | null
+  /** 플랜 전용 과제의 플랜. null이면 플랜과 무관한 공통 과제. */
+  plan?: Plan | null
   file_count: number
   /** 목록을 요청한 사용자 기준 제출 상태 */
   submission_status: SubmissionStatus | null

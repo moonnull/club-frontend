@@ -124,7 +124,7 @@ export default function TrackDetailPage() {
       ) : (
         <div className="mt-6 flex flex-col gap-3">
           {items.map((a) => (
-            <AssignmentCard key={a.id} assignment={a} />
+            <AssignmentCard key={a.id} assignment={a} showPlan />
           ))}
         </div>
       )}

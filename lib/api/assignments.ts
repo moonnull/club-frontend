@@ -17,6 +17,8 @@ export interface AssignmentPayload {
   start_at: string
   end_at: string
   track_id?: number | null
+  /** null이면 플랜과 무관한 공통 과제 */
+  plan_id?: number | null
   files: UploadResult[]
 }
 
@@ -26,6 +28,7 @@ export interface AssignmentUpdatePayload {
   start_at?: string
   end_at?: string
   track_id?: number | null
+  plan_id?: number | null
   files?: UploadResult[]
 }
 

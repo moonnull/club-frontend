@@ -21,11 +21,14 @@ export default function AssignmentCard({
   assignment,
   active = false,
   showTrack = false,
+  showPlan = false,
 }: {
   assignment: AssignmentListItem
   active?: boolean
   /** 여러 트랙이 섞여 보이는 목록에서만 트랙 배지를 노출한다. */
   showTrack?: boolean
+  /** 여러 플랜이 섞여 보이는 목록에서만 플랜 배지를 노출한다. */
+  showPlan?: boolean
 }) {
   const closed = isPastDeadline(assignment.end_at)
   const notStarted = isBeforeStart(assignment.start_at)
@@ -68,6 +71,12 @@ export default function AssignmentCard({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {/* 플랜 배지는 테두리형으로 둬서 채움형인 트랙 배지와 한눈에 구분되게 한다. */}
+        {showPlan && assignment.plan && (
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium border border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+            {assignment.plan.name}
+          </span>
+        )}
         {showTrack && assignment.track && (
           <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium badge-neutral">
             {assignment.track.name}

@@ -9,8 +9,62 @@ import { realtimeHub } from '@/lib/ws'
 import type { AssignmentListItem, User } from '@/lib/types'
 
 const ALL = 'ALL'
-// 트랙이 지정되지 않아 모두에게 보이는 과제
-const UNTRACKED = 'UNTRACKED'
+// 트랙/플랜이 지정되지 않아 모두에게 보이는 과제
+const NONE = 'NONE'
+
+/** 목록에 실제로 있는 값에서만 필터 후보를 뽑는다 (볼 수 없는 트랙·플랜은 애초에 오지 않는다).
+ *  선택지가 하나뿐이면 필터를 보여줄 이유가 없으므로 빈 배열을 돌려준다. */
+function buildFilters(
+  assignments: AssignmentListItem[],
+  pick: (a: AssignmentListItem) => { key: string; name: string } | null | undefined,
+  noneLabel: string
+) {
+  const seen = new Map<string, string>()
+  let hasNone = false
+  for (const a of assignments) {
+    const value = pick(a)
+    if (value) seen.set(value.key, value.name)
+    else hasNone = true
+  }
+  const options = [...seen].map(([key, name]) => ({ key, name }))
+  if (hasNone) options.push({ key: NONE, name: noneLabel })
+  return options.length > 1 ? [{ key: ALL, name: '전체' }, ...options] : []
+}
+
+function FilterChips({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: { key: string; name: string }[]
+  value: string
+  onChange: (key: string) => void
+}) {
+  if (options.length === 0) return null
+  return (
+    <div className="mt-3 flex items-center gap-1.5">
+      <span className="shrink-0 text-[10px] text-gray-400 w-7">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((o) => (
+          <button
+            key={o.key}
+            onClick={() => onChange(o.key)}
+            aria-pressed={value === o.key}
+            className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
+              value === o.key
+                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                : 'badge-neutral hover:opacity-80'
+            }`}
+          >
+            {o.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function AssignmentsLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -19,6 +73,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
   const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [trackKey, setTrackKey] = useState<string>(ALL)
+  const [planKey, setPlanKey] = useState<string>(ALL)
   const [collapsed, setCollapsed] = useState(false)
   const currentId = pathname.match(/^\/assignments\/(\d+)/)?.[1]
 
@@ -42,26 +97,22 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
     }
   }, [currentId])
 
-  // 필터 후보는 실제로 보이는 과제에서 뽑는다 (접근 권한이 없는 트랙은 애초에 오지 않는다).
-  // 트랙이 하나뿐이어도 트랙 없는 "공통" 과제가 섞여 있으면 필터가 의미 있다.
-  const filters = useMemo(() => {
-    const seen = new Map<string, string>()
-    let hasUntracked = false
-    for (const a of assignments) {
-      if (a.track) seen.set(a.track.key, a.track.name)
-      else hasUntracked = true
-    }
-    const options = [...seen].map(([key, name]) => ({ key, name }))
-    if (hasUntracked) options.push({ key: UNTRACKED, name: '공통' })
-    // 선택지가 하나뿐이면 필터를 보여줄 이유가 없다.
-    return options.length > 1 ? [{ key: ALL, name: '전체' }, ...options] : []
-  }, [assignments])
+  // 트랙이 하나뿐이어도 지정이 없는 "공통" 과제가 섞여 있으면 필터가 의미 있다.
+  const trackFilters = useMemo(() => buildFilters(assignments, (a) => a.track, '공통'), [assignments])
+  // 비기너/미들처럼 플랜이 다른 과제는 서로 보이지 않으므로, 회원에게 뜨는 선택지는
+  // 보통 "내 플랜 + 공통"이다. 관리자에게만 전체 플랜이 나온다.
+  const planFilters = useMemo(() => buildFilters(assignments, (a) => a.plan, '공통'), [assignments])
 
-  const visible = useMemo(() => {
-    if (trackKey === ALL) return assignments
-    if (trackKey === UNTRACKED) return assignments.filter((a) => !a.track)
-    return assignments.filter((a) => a.track?.key === trackKey)
-  }, [assignments, trackKey])
+  const visible = useMemo(
+    () =>
+      assignments.filter((a) => {
+        const trackOk =
+          trackKey === ALL || (trackKey === NONE ? !a.track : a.track?.key === trackKey)
+        const planOk = planKey === ALL || (planKey === NONE ? !a.plan : a.plan?.key === planKey)
+        return trackOk && planOk
+      }),
+    [assignments, trackKey, planKey]
+  )
 
   if (collapsed) {
     return (
@@ -109,24 +160,8 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
             </div>
           </div>
 
-          {filters.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {filters.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTrackKey(t.key)}
-                  aria-pressed={trackKey === t.key}
-                  className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
-                    trackKey === t.key
-                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                      : 'badge-neutral hover:opacity-80'
-                  }`}
-                >
-                  {t.name}
-                </button>
-              ))}
-            </div>
-          )}
+          <FilterChips label="플랜" options={planFilters} value={planKey} onChange={setPlanKey} />
+          <FilterChips label="트랙" options={trackFilters} value={trackKey} onChange={setTrackKey} />
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
@@ -134,7 +169,9 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
             <p className="text-xs text-gray-400">불러오는 중...</p>
           ) : visible.length === 0 ? (
             <p className="text-xs text-gray-400">
-              {trackKey === ALL ? '등록된 과제가 없습니다.' : '이 트랙에는 과제가 없습니다.'}
+              {trackKey === ALL && planKey === ALL
+                ? '등록된 과제가 없습니다.'
+                : '선택한 조건에 맞는 과제가 없습니다.'}
             </p>
           ) : (
             visible.map((a) => (
@@ -142,7 +179,8 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
                 key={a.id}
                 assignment={a}
                 active={String(a.id) === currentId}
-                showTrack={trackKey === ALL && filters.length > 0}
+                showTrack={trackKey === ALL && trackFilters.length > 0}
+                showPlan={planKey === ALL && planFilters.length > 0}
               />
             ))
           )}
