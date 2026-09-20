@@ -2,6 +2,9 @@ import { clearAuth } from '../session'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+/** 서버가 연장된 토큰을 실어 보내는 헤더 (app/core/deps.py의 RENEWED_TOKEN_HEADER) */
+const RENEWED_TOKEN_HEADER = 'X-Renewed-Token'
+
 function getToken(): string | null {
   return typeof window !== 'undefined' ? localStorage.getItem('token') : null
 }
@@ -22,6 +25,18 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
   } catch {
     // fetch 자체가 실패하는 건 네트워크 단절이거나 서버가 응답하지 않는 경우다.
     throw new Error('서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.')
+  }
+
+  // 슬라이딩 세션 — 서버는 활동 중인 세션의 토큰을 새로 발급해 이 헤더로 돌려준다.
+  // 받는 즉시 갈아끼워야 다음 요청이 연장된 만료 시각을 들고 나간다.
+  // 성공/실패를 가리지 않고 확인한다 (404 같은 응답도 엄연한 활동이다).
+  const renewedToken = res.headers.get(RENEWED_TOKEN_HEADER)
+  if (renewedToken && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('token', renewedToken)
+    } catch {
+      // 저장에 실패해도 이번 요청 자체는 정상이다. 다음 요청에서 다시 받는다.
+    }
   }
 
   if (res.status === 204 || res.status === 205) return null as T

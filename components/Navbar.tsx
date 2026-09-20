@@ -9,6 +9,7 @@ import {
   markNotificationRead,
   unreadCount,
 } from '@/lib/api/notifications'
+import { getMe } from '@/lib/api/auth'
 import { clearAuth, getStoredUser } from '@/lib/session'
 import { realtimeHub, type ConnectionStatus } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
@@ -24,6 +25,10 @@ const NAV_LINKS = [
   { href: '/tracks', label: '트랙', Icon: Layers },
   { href: '/calendar', label: '캘린더', Icon: CalendarDays },
 ]
+
+// 세션 연장을 위한 활동 확인 주기. 이 주기 안에 실제 조작이 있었을 때만
+// 가벼운 요청을 보낸다.
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 
 export default function Navbar() {
   const toast = useToast()
@@ -67,6 +72,35 @@ export default function Navbar() {
       off()
       offStatus()
       realtimeHub.disconnect()
+    }
+  }, [user?.id])
+
+  // 세션은 요청이 오갈 때마다 연장된다(슬라이딩). 그런데 과제나 글을 길게
+  // 쓰는 동안에는 요청이 한 건도 나가지 않아서, 분명히 쓰고 있는데도 유휴로
+  // 간주되어 만료된다. 제출 버튼을 누르는 순간 로그아웃되며 작성 중이던
+  // 내용을 잃는 게 최악의 경우다.
+  // 그래서 실제 조작(클릭·타이핑·스크롤)이 있었던 주기에만 가벼운 요청을
+  // 보내 연장한다. 자리를 비운 사용자는 조작이 없으니 그대로 만료된다.
+  useEffect(() => {
+    if (!user) return
+    let lastActivityAt = Date.now()
+    const mark = () => {
+      lastActivityAt = Date.now()
+    }
+    // capture를 켜야 내부 스크롤 영역(과제 목록 등)의 이벤트도 잡힌다.
+    const options = { passive: true, capture: true } as const
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const
+    for (const name of events) window.addEventListener(name, mark, options)
+
+    const timer = setInterval(() => {
+      if (Date.now() - lastActivityAt > HEARTBEAT_INTERVAL_MS) return
+      // 응답 헤더로 연장된 토큰이 내려오고, api 클라이언트가 알아서 갈아끼운다.
+      getMe().catch(() => {})
+    }, HEARTBEAT_INTERVAL_MS)
+
+    return () => {
+      for (const name of events) window.removeEventListener(name, mark, options)
+      clearInterval(timer)
     }
   }, [user?.id])
 

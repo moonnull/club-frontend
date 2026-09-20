@@ -55,8 +55,13 @@ class RealtimeHub {
 
   private open(): void {
     if (!this.token) return
+    // 슬라이딩 세션이라 토큰이 수시로 갱신된다. 연결을 열 때 쥐고 있던 토큰을
+    // 그대로 재사용하면, 재연결 시점에는 이미 만료된 토큰을 들고 가서 4401로
+    // 튕기고 사용 중인데도 로그아웃된다. 매번 최신 토큰을 다시 읽는다.
+    const token =
+      (typeof window !== 'undefined' ? localStorage.getItem('token') : null) ?? this.token
     this.setStatus('connecting')
-    const socket = new WebSocket(wsUrl(this.token))
+    const socket = new WebSocket(wsUrl(token))
     this.socket = socket
 
     socket.onopen = () => {
