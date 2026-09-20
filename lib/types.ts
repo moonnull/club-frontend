@@ -33,6 +33,17 @@ export interface User {
   warning_count: number
 }
 
+/**
+ * 목록·댓글에 붙는 작성자 정보 (백엔드 AuthorResponse).
+ * 화면이 쓰는 최소한만 담는다 — User 전체를 내보내면 다른 회원의
+ * 이메일·학번·주의/경고 횟수까지 응답마다 따라 나간다.
+ */
+export interface Author {
+  id: number
+  name: string
+  role: User['role']
+}
+
 export interface BoardCategory {
   id: number
   key: string
@@ -62,7 +73,7 @@ export interface Post {
   is_closed: boolean
   created_at: string
   updated_at: string
-  author: User
+  author: Author
   comment_count?: number
   attachments?: Attachment[]
   excerpt?: string
@@ -75,7 +86,7 @@ export interface Comment {
   content: string
   is_adopted: boolean
   created_at: string
-  author: User
+  author: Author
 }
 
 export interface AssignmentFile extends UploadResult {
@@ -91,7 +102,7 @@ export interface AssignmentListItem {
   start_at: string
   end_at: string
   created_at: string
-  author: User
+  author: Author
   track?: Track | null
   /** 플랜 전용 과제의 플랜. null이면 플랜과 무관한 공통 과제. */
   plan?: Plan | null
@@ -139,7 +150,7 @@ export interface SubmissionComment {
   attachment_content_type: string | null
   attachment_size: number | null
   created_at: string
-  author: User
+  author: Author
 }
 
 export interface AssignmentQuestionListItem {
@@ -149,7 +160,7 @@ export interface AssignmentQuestionListItem {
   is_answered: boolean
   comment_count: number
   created_at: string
-  author: User
+  author: Author
 }
 
 export interface AssignmentQuestion extends AssignmentQuestionListItem {
@@ -161,7 +172,7 @@ export interface AssignmentQuestionComment {
   question_id: number
   content: string
   created_at: string
-  author: User
+  author: Author
 }
 
 export interface CalendarItem {
@@ -171,7 +182,7 @@ export interface CalendarItem {
   item_date: string
   is_done: boolean
   created_at: string
-  author: User
+  author: Author
 }
 
 export interface Notification {
@@ -180,5 +191,5 @@ export interface Notification {
   link: string | null
   is_read: boolean
   created_at: string
-  sender: User | null
+  sender: Author | null
 }

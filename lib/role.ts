@@ -11,7 +11,10 @@ export const ROLE_LABEL: Record<User['role'], string> = {
  * 과제 등록과 플랜·트랙 제한 없는 과제 열람이 여기에 달려 있다.
  * 회원 관리·플랜/트랙 설정은 관리자 전용이므로 이 함수를 쓰지 않는다.
  */
-export function isAssignmentStaff(user: User | null | undefined): boolean {
+export function isAssignmentStaff(
+  // role만 읽으므로 목록에 딸려오는 축소형(Author)도 그대로 받는다.
+  user: Pick<User, 'role'> | null | undefined
+): boolean {
   return user?.role === 'ADMIN' || user?.role === 'MENTOR'
 }
 

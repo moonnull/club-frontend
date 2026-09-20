@@ -3,6 +3,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getAssignment, updateAssignment } from '@/lib/api/assignments'
 import { listPlans } from '@/lib/api/plans'
+import { notifyAssignmentListChanged } from '@/lib/events'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -87,6 +88,7 @@ export default function EditAssignmentPage() {
         plan_id: planId ? Number(planId) : null,
         files,
       })
+      notifyAssignmentListChanged()
       router.push(`/assignments/${id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')

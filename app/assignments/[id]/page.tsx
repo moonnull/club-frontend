@@ -23,6 +23,7 @@ import {
 } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
 import { clearDraft, loadDraft, pruneExpiredDrafts, saveDraft } from '@/lib/draft'
+import { notifyAssignmentListChanged } from '@/lib/events'
 import { canReviewAssignment, isAssignmentStaff } from '@/lib/role'
 import { realtimeHub } from '@/lib/ws'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -694,6 +695,8 @@ export default function AssignmentDetailPage() {
     })
     if (!confirmed) return
     await deleteAssignment(id)
+    // 지운 사람 본인에게는 WebSocket이 오지 않아, 사이드바에 그대로 남는다.
+    notifyAssignmentListChanged()
     router.push('/assignments')
   }
 
@@ -710,6 +713,8 @@ export default function AssignmentDetailPage() {
       setMySubmission(result)
       if (user) clearDraft(id, user.id)
       setRestoredAt(null)
+      // 사이드바 카드의 제출 상태 배지를 갱신한다 (WebSocket은 본인을 제외한다).
+      notifyAssignmentListChanged()
       if (isFinal) {
         setEditingOwn(false)
       } else {
@@ -915,6 +920,7 @@ export default function AssignmentDetailPage() {
                   // 제출물을 지웠는데 보관본이 남으면 다음 방문에 되살아난다.
                   if (user) clearDraft(id, user.id)
                   setRestoredAt(null)
+                  notifyAssignmentListChanged()
                   await refreshSubmissions()
                 }}
               />

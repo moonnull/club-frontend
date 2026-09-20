@@ -1,9 +1,10 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowLeftFromLine, ArrowRightFromLine, Plus } from 'lucide-react'
 import AssignmentCard from '@/components/AssignmentCard'
 import { listAssignments } from '@/lib/api/assignments'
+import { ASSIGNMENT_LIST_CHANGED_EVENT } from '@/lib/events'
 import { getStoredUser } from '@/lib/session'
 import { isAssignmentStaff } from '@/lib/role'
 import { realtimeHub } from '@/lib/ws'
@@ -78,11 +79,33 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
   const [collapsed, setCollapsed] = useState(false)
   const currentId = pathname.match(/^\/assignments\/(\d+)/)?.[1]
 
+  // 목록은 처음 한 번만 받는다. 예전에는 [pathname]에 걸려 있어서, 사이드바에서
+  // 과제를 하나 누를 때마다 목록 전체가 다시 왔다 (과제가 쌓일수록 비용이 커진다).
+  // 목록이 바뀌는 경우는 아래에서 따로 잡는다.
+  const reload = useCallback(
+    () => listAssignments().then(setAssignments).finally(() => setLoading(false)),
+    []
+  )
+
   useEffect(() => {
-    listAssignments()
-      .then(setAssignments)
-      .finally(() => setLoading(false))
-  }, [pathname])
+    reload()
+  }, [reload])
+
+  // 목록이 바뀌는 두 경로.
+  // - 남이 한 일: WebSocket으로 온다 (채점, 다른 사람의 제출).
+  // - 내가 한 일: 서버가 알림에서 행위자를 제외하므로 오지 않는다.
+  //   과제 등록·수정·삭제, 제출·제출 취소 뒤에 화면이 직접 신호를 쏜다.
+  useEffect(() => {
+    const refresh = () => {
+      void reload()
+    }
+    const offSubmission = realtimeHub.on('assignment_submission_event', refresh)
+    window.addEventListener(ASSIGNMENT_LIST_CHANGED_EVENT, refresh)
+    return () => {
+      offSubmission()
+      window.removeEventListener(ASSIGNMENT_LIST_CHANGED_EVENT, refresh)
+    }
+  }, [reload])
 
   useEffect(() => {
     const offCreated = realtimeHub.on('assignment_created', (data) => {
