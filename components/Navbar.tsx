@@ -10,6 +10,7 @@ import {
   unreadCount,
 } from '@/lib/api/notifications'
 import { getMe } from '@/lib/api/auth'
+import { ROLE_LABEL } from '@/lib/role'
 import { clearAuth, getStoredUser } from '@/lib/session'
 import { realtimeHub, type ConnectionStatus } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
@@ -293,9 +294,9 @@ export default function Navbar() {
           >
             {user.name}
           </Link>
-          {user.role === 'ADMIN' && (
+          {user.role !== 'MEMBER' && (
             <span className="text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
-              관리자
+              {ROLE_LABEL[user.role]}
             </span>
           )}
           <button

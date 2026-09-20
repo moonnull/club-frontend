@@ -22,6 +22,7 @@ import {
   submitAssignment,
 } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
+import { canReviewAssignment, isAssignmentStaff } from '@/lib/role'
 import { realtimeHub } from '@/lib/ws'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
@@ -54,6 +55,7 @@ function SubmissionCard({
   assignmentId,
   submissionId,
   currentUser,
+  canReview = false,
   onBack,
   onEdit,
   onChanged,
@@ -62,6 +64,8 @@ function SubmissionCard({
   assignmentId: string
   submissionId: number
   currentUser: User | null
+  /** 이 과제를 채점할 수 있는가 (관리자 또는 이 과제를 낸 멘토) */
+  canReview?: boolean
   onBack?: () => void
   onEdit?: () => void
   onChanged?: () => void
@@ -213,7 +217,7 @@ function SubmissionCard({
           <span className="tabular-nums">{formatTimestamp(submission.submitted_at ?? submission.created_at)}</span>
         </div>
 
-        {currentUser?.role === 'ADMIN' && (
+        {canReview && (
           <div className="flex items-center gap-2 mb-4">
             <button
               onClick={() => setGrade('PASS')}
@@ -400,7 +404,7 @@ function QuestionCard({
     await deleteQuestionComment(commentId)
     setComments((prev) => {
       const next = prev.filter((c) => c.id !== commentId)
-      setQuestion((q) => (q ? { ...q, is_answered: next.some((c) => c.author.role === 'ADMIN') } : q))
+      setQuestion((q) => (q ? { ...q, is_answered: next.some((c) => isAssignmentStaff(c.author)) } : q))
       return next
     })
     onChanged?.()
@@ -469,7 +473,7 @@ function QuestionCard({
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
                       {c.author.name}
-                      {c.author.role === 'ADMIN' && (
+                      {isAssignmentStaff(c.author) && (
                         <span className="text-[10px] badge-neutral px-1 py-0.5 rounded font-medium">
                           멘토
                         </span>
@@ -529,11 +533,10 @@ export default function AssignmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const user = getStoredUser<User>()
-  // 제출 현황(다른 사람의 제출물)은 관리자만 볼 수 있다. 일반 회원에게는
-  // 탭 자체를 감추고, 목록 조회도 하지 않는다 (백엔드가 403을 준다).
-  const isAdmin = user?.role === 'ADMIN'
-
   const [assignment, setAssignment] = useState<Assignment | null>(null)
+  // 제출 현황(다른 사람의 제출물)은 관리자와 "이 과제를 낸 멘토"만 볼 수 있다.
+  // 그 외에는 탭 자체를 감추고 목록 조회도 하지 않는다 (백엔드가 403을 준다).
+  const canReview = canReviewAssignment(user, assignment?.author.id)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -581,10 +584,13 @@ export default function AssignmentDetailPage() {
       getAssignment(id).then((a) => {
         setAssignment(a)
         setTitle((prev) => prev || (user ? `${a.title}_${user.name} 제출` : ''))
+        // 멘토는 "자기가 낸 과제"만 채점하므로, 과제를 받아봐야 권한을 알 수 있다.
+        if (canReviewAssignment(user, a.author.id)) {
+          return listSubmissions(id).then(setSubmissions)
+        }
       }),
       listQuestions(id).then(setQuestions),
     ]
-    if (isAdmin) requests.push(listSubmissions(id).then(setSubmissions))
     if (user) {
       requests.push(
         getMySubmission(id).then((sub) => {
@@ -607,10 +613,10 @@ export default function AssignmentDetailPage() {
     Promise.all(requests)
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
-  }, [id, user?.id, isAdmin])
+  }, [id, user?.id, user?.role])
 
   function refreshSubmissions() {
-    if (!isAdmin) return Promise.resolve()
+    if (!canReview) return Promise.resolve()
     return listSubmissions(id).then(setSubmissions)
   }
 
@@ -804,7 +810,7 @@ export default function AssignmentDetailPage() {
           >
             제출 작성
           </button>
-          {isAdmin && (
+          {canReview && (
             <button
               onClick={() => setRightTab('list')}
               className={`text-sm font-medium transition ${
@@ -831,14 +837,17 @@ export default function AssignmentDetailPage() {
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {!user ? (
             <p className="text-sm text-gray-400">로그인 후 이용 가능합니다.</p>
-          ) : rightTab === 'list' && !isAdmin ? (
-            <p className="text-sm text-gray-400">제출 현황은 관리자만 볼 수 있습니다.</p>
+          ) : rightTab === 'list' && !canReview ? (
+            <p className="text-sm text-gray-400">
+              제출 현황은 관리자 또는 과제를 낸 멘토만 볼 수 있습니다.
+            </p>
           ) : rightTab === 'write' ? (
             !showEditForm && mySubmission ? (
               <SubmissionCard
                 assignmentId={id}
                 submissionId={mySubmission.id}
                 currentUser={user}
+                canReview={canReview}
                 onEdit={!closed ? () => setEditingOwn(true) : undefined}
                 onChanged={refreshSubmissions}
                 onDeleted={async () => {
@@ -914,6 +923,7 @@ export default function AssignmentDetailPage() {
                 assignmentId={id}
                 submissionId={listDetailId}
                 currentUser={user}
+                canReview={canReview}
                 onBack={() => setListDetailId(null)}
                 onChanged={refreshSubmissions}
                 onDeleted={async () => {

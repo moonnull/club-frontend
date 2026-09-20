@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { listAssignments } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
+import { isAssignmentStaff } from '@/lib/role'
 import type { User } from '@/lib/types'
 
 export default function AssignmentsIndexPage() {
@@ -29,7 +30,7 @@ export default function AssignmentsIndexPage() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-sm text-gray-400 gap-3">
       <p>{hasAssignments ? '왼쪽 목록에서 과제를 선택하세요.' : '등록된 과제가 없습니다.'}</p>
-      {user?.role === 'ADMIN' && (
+      {isAssignmentStaff(user) && (
         <button
           onClick={() => router.push('/assignments/new')}
           className="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition"

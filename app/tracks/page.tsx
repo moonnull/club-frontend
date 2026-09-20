@@ -5,6 +5,7 @@ import { CalendarDays, ChevronRight, Layers } from 'lucide-react'
 import { listAssignments } from '@/lib/api/assignments'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
+import { isAssignmentStaff } from '@/lib/role'
 import { errorMessage, useToast } from '@/components/Toast'
 import { duration, isPastDeadline, toDate } from '@/lib/formatDeadline'
 import type { AssignmentListItem, Track, User } from '@/lib/types'
@@ -12,8 +13,11 @@ import type { AssignmentListItem, Track, User } from '@/lib/types'
 export default function TracksPage() {
   const toast = useToast()
   const me = getStoredUser<User>()
-  // 관리자는 제출할 일이 없어 제출 진행률이 늘 0이므로, 마감 진행률을 대신 보여준다.
-  const isAdmin = me?.role === 'ADMIN'
+  // 관리자·멘토는 과제를 운영하는 쪽이다. 플랜·트랙 제한 없이 과제를 보므로
+  // 트랙 목록도 전부 보여준다 — 자기 트랙만 보이면 방금 낸 과제가 어디에도
+  // 안 보이는 상황이 생긴다. 제출할 일도 없어 제출 진행률이 늘 0이라,
+  // 마감 진행률을 대신 보여준다.
+  const isStaff = isAssignmentStaff(me)
   // 예전 세션의 localStorage 캐시에는 tracks가 없을 수 있다.
   const myTrackIds = me?.tracks?.map((t) => t.id) ?? []
   const [tracks, setTracks] = useState<Track[]>([])
@@ -30,13 +34,13 @@ export default function TracksPage() {
       .finally(() => setLoading(false))
   }, [toast])
 
-  // 관리자는 전체 트랙을, 회원은 자기가 수강 중인 트랙만 본다.
+  // 관리자·멘토는 전체 트랙을, 회원은 자기가 수강 중인 트랙만 본다.
   // 과제 목록은 이미 트랙별로 필터링되어 오므로, 남의 트랙을 보여주면
   // "과제 0개"인 빈 카드만 늘어서 오히려 혼란스럽다.
   const visibleTracks = useMemo(
-    () => (isAdmin ? tracks : tracks.filter((t) => myTrackIds.includes(t.id))),
+    () => (isStaff ? tracks : tracks.filter((t) => myTrackIds.includes(t.id))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tracks, isAdmin, myTrackIds.join(',')],
+    [tracks, isStaff, myTrackIds.join(',')],
   )
 
   // 트랙별 요약(과제 수, 전체 기간, 진행률)을 한 번에 계산해 카드에 쓴다.
@@ -45,7 +49,7 @@ export default function TracksPage() {
       const items = assignments.filter((a) => a.track?.id === track.id)
       const starts = items.map((a) => toDate(a.start_at).getTime())
       const ends = items.map((a) => toDate(a.end_at).getTime())
-      const done = isAdmin
+      const done = isStaff
         ? items.filter((a) => isPastDeadline(a.end_at)).length
         : items.filter((a) => a.submission_status === 'FINAL').length
       return {
@@ -58,7 +62,7 @@ export default function TracksPage() {
         done,
       }
     })
-  }, [visibleTracks, assignments, isAdmin])
+  }, [visibleTracks, assignments, isStaff])
 
   const untracked = assignments.filter((a) => !a.track).length
 
@@ -69,7 +73,7 @@ export default function TracksPage() {
         <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">트랙</h1>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        {isAdmin
+        {isStaff
           ? '전체 트랙입니다. 트랙을 선택하면 해당 과정의 과제를 순서대로 볼 수 있습니다.'
           : '내가 수강 중인 트랙입니다. 선택하면 과제를 순서대로 볼 수 있습니다.'}
       </p>
@@ -78,7 +82,7 @@ export default function TracksPage() {
         <p className="text-sm text-gray-400">불러오는 중...</p>
       ) : summaries.length === 0 ? (
         <p className="text-sm text-gray-400">
-          {isAdmin
+          {isStaff
             ? '등록된 트랙이 없습니다.'
             : '아직 배정된 트랙이 없습니다. 관리자에게 문의해주세요.'}
         </p>
@@ -113,7 +117,7 @@ export default function TracksPage() {
                     aria-valuemin={0}
                     aria-valuemax={count}
                     aria-valuenow={done}
-                    aria-label={`${track.name} ${isAdmin ? '마감' : '제출'} 진행률`}
+                    aria-label={`${track.name} ${isStaff ? '마감' : '제출'} 진행률`}
                   >
                     <div
                       className="h-full bg-gray-900 dark:bg-white transition-all"
@@ -121,7 +125,7 @@ export default function TracksPage() {
                     />
                   </div>
                   <p className="mt-1.5 text-[11px] text-gray-400">
-                    {isAdmin ? '마감' : '제출'} {done} / {count}
+                    {isStaff ? '마감' : '제출'} {done} / {count}
                   </p>
                 </div>
               )}

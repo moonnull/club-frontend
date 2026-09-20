@@ -19,6 +19,7 @@ import { createTrack, deleteTrack, listTracks, updateTrack } from '@/lib/api/tra
 import { createPlan, deletePlan, listPlans, updatePlan } from '@/lib/api/plans'
 import { getMe } from '@/lib/api/auth'
 import { getStoredUser, saveAuth } from '@/lib/session'
+import { ROLE_LABEL } from '@/lib/role'
 import type { BoardCategory, Plan, Track, User } from '@/lib/types'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
@@ -91,10 +92,10 @@ export default function AdminPage() {
     }
   }
 
-  async function toggleRole(user: User) {
-    const nextRole = user.role === 'ADMIN' ? 'MEMBER' : 'ADMIN'
+  async function changeRole(user: User, nextRole: User['role']) {
+    if (nextRole === user.role) return
     const confirmed = await confirm({
-      message: `${user.name} 님을 ${nextRole === 'ADMIN' ? '관리자로' : '일반 회원으로'} 변경할까요?`,
+      message: `${user.name} 님의 역할을 ${ROLE_LABEL[nextRole]}(으)로 변경할까요?`,
       confirmLabel: '변경',
     })
     if (!confirmed) return
@@ -380,9 +381,9 @@ export default function AdminPage() {
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-100">
                       {u.name} <span className="text-gray-400 font-normal">· {u.student_id}</span>
-                      {u.role === 'ADMIN' && (
+                      {u.role !== 'MEMBER' && (
                         <span className="ml-2 text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
-                          관리자
+                          {ROLE_LABEL[u.role]}
                         </span>
                       )}
                     </p>
@@ -419,13 +420,19 @@ export default function AdminPage() {
                       selected={(u.tracks ?? []).map((t) => t.id)}
                       onChange={(ids) => changeTracks(u, ids)}
                     />
-                    <button
-                      onClick={() => toggleRole(u)}
+                    <select
+                      value={u.role}
+                      onChange={(e) => changeRole(u, e.target.value as User['role'])}
                       disabled={u.id === me.id}
-                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition disabled:opacity-30"
+                      aria-label={`${u.name} 역할`}
+                      className="text-sm bg-transparent border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 rounded-lg px-2 py-1.5 transition disabled:opacity-30"
                     >
-                      {u.role === 'ADMIN' ? '관리자 해제' : '관리자 지정'}
-                    </button>
+                      {(['MEMBER', 'MENTOR', 'ADMIN'] as const).map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_LABEL[r]}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       onClick={() => resetPassword(u)}
                       className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"

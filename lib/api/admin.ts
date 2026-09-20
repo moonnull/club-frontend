@@ -9,7 +9,7 @@ export function approveUser(userId: number) {
   return api.post<User>(`/api/admin/users/${userId}/approve`, {})
 }
 
-export function updateUserRole(userId: number, role: 'MEMBER' | 'ADMIN') {
+export function updateUserRole(userId: number, role: User['role']) {
   return api.put<User>(`/api/admin/users/${userId}/role`, { role })
 }
 

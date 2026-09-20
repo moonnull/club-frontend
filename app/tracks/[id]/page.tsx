@@ -8,6 +8,7 @@ import { errorMessage, useToast } from '@/components/Toast'
 import { listAssignments } from '@/lib/api/assignments'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
+import { isAssignmentStaff } from '@/lib/role'
 import { duration, isPastDeadline, toDate } from '@/lib/formatDeadline'
 import { realtimeHub } from '@/lib/ws'
 import type { AssignmentListItem, Track, User } from '@/lib/types'
@@ -15,13 +16,14 @@ import type { AssignmentListItem, Track, User } from '@/lib/types'
 export default function TrackDetailPage() {
   const toast = useToast()
   const me = getStoredUser<User>()
-  const isAdmin = me?.role === 'ADMIN'
+  // 관리자·멘토는 과제를 운영하는 쪽 — 모든 트랙을 보고, 제출할 일이 없다.
+  const isStaff = isAssignmentStaff(me)
   const { id } = useParams<{ id: string }>()
   const trackId = Number(id)
   // 수강 중이 아닌 트랙은 URL로 직접 들어와도 막는다. (과제 자체는 서버가
   // 이미 걸러주지만, 트랙 이름과 커리큘럼 구성까지 보여줄 이유는 없다)
   // trackId를 읽으므로 반드시 그 선언 뒤에 와야 한다.
-  const canView = isAdmin || (me?.tracks?.some((t) => t.id === trackId) ?? false)
+  const canView = isStaff || (me?.tracks?.some((t) => t.id === trackId) ?? false)
   const [track, setTrack] = useState<Track | null>(null)
   const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,7 +110,7 @@ export default function TrackDetailPage() {
             <>
               <span aria-hidden="true">·</span>
               <span>마감 {closed}개</span>
-              {!isAdmin && (
+              {!isStaff && (
                 <>
                   <span aria-hidden="true">·</span>
                   <span>제출 {submitted}개</span>

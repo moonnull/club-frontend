@@ -5,6 +5,7 @@ import { ArrowLeftFromLine, ArrowRightFromLine, Plus } from 'lucide-react'
 import AssignmentCard from '@/components/AssignmentCard'
 import { listAssignments } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
+import { isAssignmentStaff } from '@/lib/role'
 import { realtimeHub } from '@/lib/ws'
 import type { AssignmentListItem, User } from '@/lib/types'
 
@@ -139,7 +140,7 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-bold text-gray-900 dark:text-white">과제</h2>
             <div className="flex items-center gap-1.5">
-              {user?.role === 'ADMIN' && (
+              {isAssignmentStaff(user) && (
                 <button
                   onClick={() => router.push('/assignments/new')}
                   aria-label="과제 등록"

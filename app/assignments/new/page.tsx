@@ -5,6 +5,7 @@ import { createAssignment } from '@/lib/api/assignments'
 import { listPlans } from '@/lib/api/plans'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
+import { isAssignmentStaff } from '@/lib/role'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import type { Plan, Track, UploadResult, User } from '@/lib/types'
@@ -62,10 +63,10 @@ export default function NewAssignmentPage() {
     }
   }
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!isAssignmentStaff(user)) {
     return (
       <div className="flex items-center justify-center py-24 text-sm text-gray-400">
-        관리자만 접근할 수 있습니다.
+        관리자 또는 멘토만 접근할 수 있습니다.
       </div>
     )
   }

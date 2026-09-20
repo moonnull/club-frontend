@@ -109,6 +109,7 @@ export default function EditAssignmentPage() {
     )
   }
 
+  // 과제는 낸 사람 본인과 관리자만 고친다 (백엔드 _can_manage와 같은 규칙).
   const canEdit = user.id === assignment.author.id || user.role === 'ADMIN'
   if (!canEdit) {
     return (
