@@ -45,6 +45,8 @@ export interface UpdateProfilePayload {
   password?: string
   security_question?: string
   security_answer?: string
+  /** 비밀번호·보안 질문을 바꿀 때 서버가 요구하는 현재 비밀번호 */
+  current_password?: string
 }
 
 export function updateProfile(data: UpdateProfilePayload) {

@@ -33,6 +33,29 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     setChecked(true)
   }, [pathname, isPublic, router])
 
+  // 다른 탭에서 로그인/로그아웃하면 이 탭도 따라간다.
+  // clearAuth()가 쏘는 auth-changed는 window.dispatchEvent라 같은 탭에서만
+  // 들린다. 탭 사이를 건너오는 신호는 storage 이벤트뿐이라, 이게 없으면
+  // 로그아웃한 탭 옆에서 다른 탭은 로그인된 화면을 그대로 띄운 채 남는다.
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      // key가 null인 경우는 localStorage.clear()다.
+      if (e.key !== null && e.key !== 'token' && e.key !== 'user') return
+      const loggedIn = getStoredUser<User>() !== null
+
+      // router.replace가 아니라 전체 새로고침으로 보낸다. 라우터 이동만 하면
+      // WebSocket 허브가 메모리에 들고 있는 토큰이 살아남아, 로그아웃한 뒤에도
+      // 이 탭이 알림을 계속 받는다.
+      if (!loggedIn && !isPublic) {
+        window.location.href = '/login'
+      } else if (loggedIn && isPublic && !PUBLIC_EVEN_WHEN_LOGGED_IN.includes(pathname)) {
+        window.location.href = '/'
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [isPublic, pathname])
+
   if (!checked) {
     // 빈 화면 대신 최소한의 자리표시자. 배경색이 이미 잡혀 있어 깜빡임이 없다.
     return (
