@@ -94,6 +94,37 @@ export interface PostRow {
   author_name: string
 }
 
+export interface AssignmentRow {
+  id: number
+  title: string
+  plan_name: string | null
+  track_name: string | null
+  start_at: string
+  end_at: string
+  submission_count: number
+  author_name: string
+}
+
+export interface UsageSection {
+  used: number | null
+  limit: number | null
+}
+
+export interface StorageUsage {
+  database: {
+    used_bytes: number
+    limit_bytes: number | null
+    tables: { name: string; bytes: number }[]
+  }
+  /** Cloudinary 미설정이거나 조회 실패 시 null */
+  cloudinary: {
+    plan: string | null
+    credits: UsageSection
+    storage: UsageSection
+    bandwidth: UsageSection
+  } | null
+}
+
 export interface RowPage<T> {
   rows: T[]
   total: number
@@ -121,4 +152,16 @@ export function listAllPosts(limit = 50, offset = 0) {
 
 export function deletePostsByIds(ids: number[]) {
   return api.post<CleanupResult>(`${BASE}/posts/delete`, { ids })
+}
+
+export function listAllAssignments(limit = 50, offset = 0) {
+  return api.get<RowPage<AssignmentRow>>(`${BASE}/assignments?limit=${limit}&offset=${offset}`)
+}
+
+export function deleteAssignmentsByIds(ids: number[]) {
+  return api.post<CleanupResult>(`${BASE}/assignments/delete`, { ids })
+}
+
+export function getStorageUsage() {
+  return api.get<StorageUsage>(`${BASE}/storage-usage`)
 }

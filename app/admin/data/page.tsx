@@ -17,14 +17,19 @@ import {
   listAllNotifications,
   listAllCalendarItems,
   listAllPosts,
+  listAllAssignments,
+  getStorageUsage,
   deleteNotificationsByIds,
   deleteCalendarItemsByIds,
   deletePostsByIds,
+  deleteAssignmentsByIds,
   type CalendarRow,
   type MaintenanceNotification,
   type NotificationRow,
   type OrphanFile,
   type PostRow,
+  type AssignmentRow,
+  type StorageUsage,
 } from '@/lib/api/maintenance'
 import { formatTimestamp } from '@/lib/formatDeadline'
 import SelectableRows from '@/components/SelectableRows'
@@ -49,16 +54,40 @@ const TABLE_LABELS: Record<string, string> = {
 }
 
 function mb(bytes: number): string {
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
 }
 
-// 관리자가 전체를 볼 화면이 따로 없는 테이블만 여기서 펼쳐본다.
-// 회원·게시글·과제 등은 각자 전용 관리 화면에서 지워야 첨부 파일·알림
-// 정리 같은 후속 처리가 함께 돈다.
+/** 사용량 막대. 한도를 모르면(limit이 null) 막대 없이 사용량만 보여준다. */
+function UsageBar({ used, limit }: { used: number | null; limit: number | null }) {
+  if (used === null || limit === null || limit <= 0) return null
+  const percent = Math.min(100, (used / limit) * 100)
+  return (
+    <div className="mt-1.5">
+      <div
+        className="h-1 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percent)}
+      >
+        <div
+          // 90%를 넘으면 붉게 — 무채색 팔레트지만 한도 임박은 경고로 봐야 한다.
+          className={`h-full transition-all ${percent >= 90 ? 'bg-red-500' : 'bg-gray-900 dark:bg-white'}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <p className="mt-1 text-[11px] text-gray-400 tabular-nums">{percent.toFixed(1)}% 사용</p>
+    </div>
+  )
+}
+
 // 현황 카드를 눌러 목록을 펼칠 수 있는 테이블.
 // 게시글은 /posts에도 있지만 게시판별로 흩어져 있어, 오래된 테스트 글처럼
 // "어느 게시판에 남겼는지 기억나지 않는 글"은 여기서 찾는 게 빠르다.
-const BROWSABLE = new Set(['posts', 'notifications', 'calendar_items'])
+const BROWSABLE = new Set(['posts', 'assignments', 'notifications', 'calendar_items'])
 const ROWS_PER_PAGE = 50
 
 export default function AdminDataPage() {
@@ -81,6 +110,8 @@ export default function AdminDataPage() {
   const [notiRows, setNotiRows] = useState<{ rows: NotificationRow[]; total: number } | null>(null)
   const [calRows, setCalRows] = useState<{ rows: CalendarRow[]; total: number } | null>(null)
   const [postRows, setPostRows] = useState<{ rows: PostRow[]; total: number } | null>(null)
+  const [asgRows, setAsgRows] = useState<{ rows: AssignmentRow[]; total: number } | null>(null)
+  const [usage, setUsage] = useState<StorageUsage | null>(null)
 
   useEffect(() => {
     if (!getStoredUser<User>()) {
@@ -98,6 +129,11 @@ export default function AdminDataPage() {
         getStorageStats()
           .then((s) => setStats(s.tables))
           .catch((err) => toast(errorMessage(err), 'error'))
+        // 용량은 따로 부른다 — Cloudinary API를 타느라 느리거나 실패해도
+        // 현황 표까지 함께 막히면 안 된다.
+        getStorageUsage()
+          .then(setUsage)
+          .catch(() => {})
       })
       .catch(() => router.replace('/login'))
   }, [])
@@ -129,6 +165,8 @@ export default function AdminDataPage() {
     setOpenTable(table)
     if (table === 'posts') {
       await run('browse', () => listAllPosts(ROWS_PER_PAGE), (r) => setPostRows(r))
+    } else if (table === 'assignments') {
+      await run('browse', () => listAllAssignments(ROWS_PER_PAGE), (r) => setAsgRows(r))
     } else if (table === 'notifications') {
       await run('browse', () => listAllNotifications(ROWS_PER_PAGE), (r) => setNotiRows(r))
     } else if (table === 'calendar_items') {
@@ -147,13 +185,16 @@ export default function AdminDataPage() {
       const r =
         table === 'posts'
           ? await deletePostsByIds(ids)
-          : table === 'notifications'
-            ? await deleteNotificationsByIds(ids)
-            : await deleteCalendarItemsByIds(ids)
+          : table === 'assignments'
+            ? await deleteAssignmentsByIds(ids)
+            : table === 'notifications'
+              ? await deleteNotificationsByIds(ids)
+              : await deleteCalendarItemsByIds(ids)
       toast(`${r.deleted}건을 삭제했습니다.`)
       refreshStats()
       // 목록을 다시 불러와 방금 지운 것이 남아 보이지 않게 한다.
       if (table === 'posts') setPostRows(await listAllPosts(ROWS_PER_PAGE))
+      else if (table === 'assignments') setAsgRows(await listAllAssignments(ROWS_PER_PAGE))
       else if (table === 'notifications') setNotiRows(await listAllNotifications(ROWS_PER_PAGE))
       else setCalRows(await listAllCalendarItems(ROWS_PER_PAGE))
     } catch (err: unknown) {
@@ -164,6 +205,10 @@ export default function AdminDataPage() {
   function refreshStats() {
     getStorageStats()
       .then((s) => setStats(s.tables))
+      .catch(() => {})
+    // 지우고 나면 용량도 줄어야 하므로 함께 갱신한다.
+    getStorageUsage()
+      .then(setUsage)
       .catch(() => {})
   }
 
@@ -186,6 +231,95 @@ export default function AdminDataPage() {
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
         더 이상 쓰이지 않는 데이터를 찾아 정리합니다. 목록을 먼저 확인한 뒤 삭제할 수 있습니다.
       </p>
+
+      {/* ── 남은 용량 ── */}
+      <section className="mb-10">
+        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">남은 용량</h2>
+        {usage === null ? (
+          <p className="text-sm text-gray-400">불러오는 중...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="panel rounded-xl px-4 py-3">
+              <p className="text-xs text-gray-400">데이터베이스</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white tabular-nums">
+                {mb(usage.database.used_bytes)}
+                {usage.database.limit_bytes && (
+                  <span className="text-sm font-normal text-gray-400">
+                    {' / '}
+                    {mb(usage.database.limit_bytes)}
+                  </span>
+                )}
+              </p>
+              <UsageBar used={usage.database.used_bytes} limit={usage.database.limit_bytes} />
+              {!usage.database.limit_bytes && (
+                <p className="mt-1 text-[11px] text-gray-400">
+                  한도는 호스팅 플랜마다 달라 자동으로 알 수 없습니다.
+                  {' '}
+                  <code>DATABASE_SIZE_LIMIT_MB</code>를 설정하면 남은 양이 표시됩니다.
+                </p>
+              )}
+              {usage.database.tables.length > 0 && (
+                <ul className="mt-2.5 space-y-0.5">
+                  {usage.database.tables.slice(0, 5).map((t) => (
+                    <li key={t.name} className="flex text-[11px] text-gray-400">
+                      <span className="truncate">{TABLE_LABELS[t.name] ?? t.name}</span>
+                      <span className="ml-auto shrink-0 tabular-nums">{mb(t.bytes)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="panel rounded-xl px-4 py-3">
+              <p className="text-xs text-gray-400">
+                Cloudinary (첨부파일)
+                {usage.cloudinary?.plan && (
+                  <span className="ml-1.5 badge-neutral px-1.5 py-0.5 rounded text-[10px]">
+                    {usage.cloudinary.plan}
+                  </span>
+                )}
+              </p>
+              {usage.cloudinary === null ? (
+                <p className="mt-1 text-sm text-gray-400">
+                  조회할 수 없습니다. (CLOUDINARY_URL 미설정이거나 API 응답 없음)
+                </p>
+              ) : (
+                <>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white tabular-nums">
+                    {usage.cloudinary.storage.used !== null
+                      ? mb(usage.cloudinary.storage.used)
+                      : '—'}
+                    {usage.cloudinary.storage.limit && (
+                      <span className="text-sm font-normal text-gray-400">
+                        {' / '}
+                        {mb(usage.cloudinary.storage.limit)}
+                      </span>
+                    )}
+                  </p>
+                  <UsageBar
+                    used={usage.cloudinary.storage.used}
+                    limit={usage.cloudinary.storage.limit}
+                  />
+                  {/* 무료 플랜은 용량·대역폭·변환을 크레딧 하나로 묶어 센다.
+                      실제 한도는 이쪽이라 함께 보여준다. */}
+                  {usage.cloudinary.credits.limit !== null && (
+                    <div className="mt-2.5">
+                      <p className="text-[11px] text-gray-400 tabular-nums">
+                        크레딧 {usage.cloudinary.credits.used ?? 0} /{' '}
+                        {usage.cloudinary.credits.limit}
+                      </p>
+                      <UsageBar
+                        used={usage.cloudinary.credits.used}
+                        limit={usage.cloudinary.credits.limit}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* ── 저장소 현황 ── */}
       <section className="mb-10">
@@ -236,6 +370,8 @@ export default function AdminDataPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {openTable === 'posts'
                     ? '게시판 구분 없는 전체 글입니다. 삭제하면 첨부 파일과 관련 알림도 함께 정리됩니다.'
+                    : openTable === 'assignments'
+                    ? '플랜·트랙 구분 없는 전체 과제입니다. 삭제하면 제출물·질문·댓글과 첨부 파일까지 함께 사라집니다.'
                     : openTable === 'notifications'
                       ? '모든 회원이 받은 알림입니다. 알림 벨에는 본인 것만 보이므로 여기서만 전체를 볼 수 있습니다.'
                       : '모든 캘린더 항목입니다. 캘린더 화면은 보고 있는 달만 조회하므로 여기서만 전체를 볼 수 있습니다.'}
@@ -260,6 +396,30 @@ export default function AdminDataPage() {
                         </p>
                         <p className="text-xs text-gray-400">
                           {post.board_name} · {post.author_name} · {formatTimestamp(post.created_at)}
+                        </p>
+                      </>
+                    )}
+                  />
+                ) : openTable === 'assignments' && asgRows ? (
+                  <SelectableRows
+                    rows={asgRows.rows}
+                    total={asgRows.total}
+                    emptyMessage="과제가 없습니다."
+                    onDelete={(ids) => deleteSelected('assignments', ids)}
+                    renderRow={(a) => (
+                      <>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                          {a.title}
+                          {/* 제출물이 딸린 과제를 실수로 지우지 않도록 건수를 눈에 띄게 둔다. */}
+                          {a.submission_count > 0 && (
+                            <span className="ml-1.5 text-[10px] badge-neutral px-1.5 py-0.5 rounded">
+                              제출 {a.submission_count}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {a.plan_name ?? '플랜 공통'} · {a.track_name ?? '트랙 공통'} ·{' '}
+                          {a.author_name} · {formatTimestamp(a.start_at)}
                         </p>
                       </>
                     )}
