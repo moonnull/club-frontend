@@ -22,6 +22,7 @@ import {
   submitAssignment,
 } from '@/lib/api/assignments'
 import { getStoredUser } from '@/lib/session'
+import { clearDraft, loadDraft, pruneExpiredDrafts, saveDraft } from '@/lib/draft'
 import { canReviewAssignment, isAssignmentStaff } from '@/lib/role'
 import { realtimeHub } from '@/lib/ws'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -533,6 +534,8 @@ export default function AssignmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const user = getStoredUser<User>()
+  // getStoredUser()는 렌더마다 새 객체를 돌려준다. 효과 의존성에는 원시값만 쓴다.
+  const userId = user?.id
   const [assignment, setAssignment] = useState<Assignment | null>(null)
   // 제출 현황(다른 사람의 제출물)은 관리자와 "이 과제를 낸 멘토"만 볼 수 있다.
   // 그 외에는 탭 자체를 감추고 목록 조회도 하지 않는다 (백엔드가 403을 준다).
@@ -550,6 +553,11 @@ export default function AssignmentDetailPage() {
   const [submitError, setSubmitError] = useState('')
   const [editingOwn, setEditingOwn] = useState(false)
   const [listDetailId, setListDetailId] = useState<number | null>(null)
+  // 브라우저에 자동 보관해 둔 작성 내용을 되살렸을 때의 저장 시각.
+  // null이면 복구한 게 없다는 뜻이라 안내를 띄우지 않는다.
+  const [restoredAt, setRestoredAt] = useState<number | null>(null)
+  // 서버에서 불러오기가 끝나기 전에 자동 보관을 돌리면 빈 값이 초안을 덮는다.
+  const [draftReady, setDraftReady] = useState(false)
 
   const [questions, setQuestions] = useState<AssignmentQuestionListItem[]>([])
   const [questionView, setQuestionView] = useState<'list' | 'write' | 'detail'>('list')
@@ -579,6 +587,8 @@ export default function AssignmentDetailPage() {
     setSelectedQuestionId(null)
     setQuestionTitle('')
     setQuestionContent('')
+    setRestoredAt(null)
+    setDraftReady(false)
 
     const requests: Promise<unknown>[] = [
       getAssignment(id).then((a) => {
@@ -614,6 +624,43 @@ export default function AssignmentDetailPage() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [id, user?.id, user?.role])
+
+  // 불러오기가 끝난 뒤, 브라우저에 남아 있는 작성 내용을 확인한다.
+  // 서버 초안(mySubmission)과 다를 때만 되살린다 — 같은 내용을 두고
+  // "복구했습니다"라고 알리면 잃은 게 없는데 잃은 것처럼 보인다.
+  useEffect(() => {
+    if (loading || notFound || userId === undefined) return
+    pruneExpiredDrafts()
+    const draft = loadDraft(id, userId)
+    if (draft) {
+      const savedContent = mySubmission?.content ?? ''
+      const savedTitle = mySubmission?.title ?? ''
+      if (draft.content !== savedContent || draft.title !== savedTitle) {
+        setTitle(draft.title)
+        setContent(draft.content)
+        setFile(draft.file)
+        setRestoredAt(draft.savedAt)
+      }
+    }
+    setDraftReady(true)
+    // mySubmission은 이 효과 안에서 바꾸지 않으므로 의존성에 둬도 반복되지 않는다.
+  }, [loading, notFound, id, userId, mySubmission])
+
+  // 입력이 멈추면 브라우저에 보관한다. 매 글자마다 쓰면 긴 글에서 부담이 된다.
+  useEffect(() => {
+    if (!draftReady || userId === undefined || !assignment) return
+    // 제출할 수 없는 상태(시작 전·마감 후)에서는 보관할 이유가 없다.
+    if (isBeforeStart(assignment.start_at) || isPastDeadline(assignment.end_at)) return
+
+    const timer = setTimeout(() => {
+      if (textLength(content) === 0 && !file) {
+        clearDraft(id, userId)
+        return
+      }
+      saveDraft(id, userId, { title, content, file })
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [title, content, file, draftReady, id, userId, assignment])
 
   function refreshSubmissions() {
     if (!canReview) return Promise.resolve()
@@ -661,6 +708,8 @@ export default function AssignmentDetailPage() {
         is_final: isFinal,
       })
       setMySubmission(result)
+      if (user) clearDraft(id, user.id)
+      setRestoredAt(null)
       if (isFinal) {
         setEditingOwn(false)
       } else {
@@ -863,6 +912,9 @@ export default function AssignmentDetailPage() {
                   setTitle(user ? `${assignment.title}_${user.name} 제출` : '')
                   setContent('')
                   setFile(null)
+                  // 제출물을 지웠는데 보관본이 남으면 다음 방문에 되살아난다.
+                  if (user) clearDraft(id, user.id)
+                  setRestoredAt(null)
                   await refreshSubmissions()
                 }}
               />
@@ -899,6 +951,36 @@ export default function AssignmentDetailPage() {
                       placeholder="'/'를 입력하여 작성을 시작해보세요."
                       fullHeight
                     />
+                    {restoredAt !== null && (
+                      <div className="shrink-0 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-800 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>
+                          저장하지 않은 작성 내용을 복구했습니다 ({formatTimestamp(new Date(restoredAt).toISOString())})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // 복구한 내용을 버리고 서버에 저장된 상태로 되돌린다.
+                            setTitle(mySubmission?.title ?? (assignment && user ? `${assignment.title}_${user.name} 제출` : ''))
+                            setContent(mySubmission?.content ?? '')
+                            setFile(
+                              mySubmission?.attachment_url
+                                ? {
+                                    url: mySubmission.attachment_url,
+                                    filename: mySubmission.attachment_filename ?? '',
+                                    content_type: mySubmission.attachment_content_type ?? '',
+                                    size: mySubmission.attachment_size ?? 0,
+                                  }
+                                : null
+                            )
+                            if (user) clearDraft(id, user.id)
+                            setRestoredAt(null)
+                          }}
+                          className="ml-auto underline hover:text-gray-800 dark:hover:text-gray-200 transition"
+                        >
+                          되돌리기
+                        </button>
+                      </div>
+                    )}
                     {submitError && <p className="text-red-500 text-sm shrink-0">{submitError}</p>}
                     {canSubmit && (
                       <div className="flex items-center justify-between gap-3 shrink-0">
