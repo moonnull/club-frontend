@@ -82,6 +82,12 @@ export default function AssignmentsLayout({ children }: { children: React.ReactN
   // 목록은 처음 한 번만 받는다. 예전에는 [pathname]에 걸려 있어서, 사이드바에서
   // 과제를 하나 누를 때마다 목록 전체가 다시 왔다 (과제가 쌓일수록 비용이 커진다).
   // 목록이 바뀌는 경우는 아래에서 따로 잡는다.
+  //
+  // 여기는 일부러 페이지를 나누지 않는다. 아래 트랙·플랜 필터에 "없음"이 있어서
+  // 클라이언트에서 걸러야 하는데, 일부만 받아둔 상태로 거르면 뒤쪽 페이지에 있는
+  // 과제가 필터 결과에서 통째로 빠진다 — 사용자에게는 과제가 없는 것처럼 보인다.
+  // 목록 응답은 본문 없이 한 건당 수백 바이트이고 세션당 한 번만 받는다.
+  // 화면 진입만 필요한 곳(과제 인덱스·트랙 목록·캘린더)은 이미 필요한 만큼만 받는다.
   const reload = useCallback(
     () => listAssignments().then(setAssignments).finally(() => setLoading(false)),
     []

@@ -95,6 +95,20 @@ export interface AssignmentFile extends UploadResult {
 /** null = 미제출, DRAFT = 임시저장만 함, FINAL = 최종 제출 완료 */
 export type SubmissionStatus = 'DRAFT' | 'FINAL'
 
+/**
+ * 트랙 목록 화면이 카드 하나를 그리는 데 필요한 값 (백엔드 TrackAssignmentSummary).
+ * 전체 과제를 내려받아 클라이언트에서 세는 대신 서버가 집계해 준다.
+ */
+export interface TrackAssignmentSummary {
+  /** 트랙이 지정되지 않은(전원 공통) 과제는 null로 묶여 온다. */
+  track_id: number | null
+  count: number
+  first_start_at: string | null
+  last_end_at: string | null
+  /** 회원은 최종 제출을 마친 과제 수, 운영자는 마감이 지난 과제 수. */
+  done: number
+}
+
 export interface AssignmentListItem {
   id: number
   title: string

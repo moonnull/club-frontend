@@ -8,6 +8,7 @@ import type {
   Submission,
   SubmissionComment,
   SubmissionListItem,
+  TrackAssignmentSummary,
   UploadResult,
 } from '../types'
 
@@ -39,8 +40,32 @@ export interface SubmissionPayload {
   is_final: boolean
 }
 
-export function listAssignments() {
-  return api.get<AssignmentListItem[]>('/api/assignments')
+/** 과제 목록을 받아올 범위. 화면마다 필요한 만큼만 요청한다. */
+export interface AssignmentQuery {
+  /** 이 트랙의 과제만 (트랙 상세 화면) */
+  trackId?: number
+  /** 이 시각 이전에 시작한 것만 (ISO 문자열) */
+  startsBefore?: string
+  /** 이 시각 이후에 끝나는 것만 (ISO 문자열) */
+  endsAfter?: string
+  limit?: number
+  offset?: number
+}
+
+export function listAssignments(query: AssignmentQuery = {}) {
+  const params = new URLSearchParams()
+  if (query.trackId !== undefined) params.set('track_id', String(query.trackId))
+  if (query.startsBefore) params.set('starts_before', query.startsBefore)
+  if (query.endsAfter) params.set('ends_after', query.endsAfter)
+  if (query.limit !== undefined) params.set('limit', String(query.limit))
+  if (query.offset) params.set('offset', String(query.offset))
+  const qs = params.toString()
+  return api.get<AssignmentListItem[]>(`/api/assignments${qs ? `?${qs}` : ''}`)
+}
+
+/** 트랙별 집계. 트랙 목록 화면이 전체 과제를 받지 않아도 되게 한다. */
+export function getTrackSummaries() {
+  return api.get<TrackAssignmentSummary[]>('/api/assignments/summary')
 }
 
 export function getAssignment(id: number | string) {

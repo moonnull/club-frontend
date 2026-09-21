@@ -65,7 +65,13 @@ export default function CalendarPage() {
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([listAssignments(), listCalendarItems(monthStart, monthEnd)])
+    // 캘린더는 보고 있는 달만 그린다. 과제도 일정과 같은 범위만 받는다 —
+    // 그 달에 걸쳐 있으면 되므로 "이 달이 끝나기 전에 시작"하고
+    // "이 달이 시작된 뒤에 끝나는" 것을 받는다.
+    Promise.all([
+      listAssignments({ startsBefore: `${monthEnd}T23:59:59`, endsAfter: `${monthStart}T00:00:00` }),
+      listCalendarItems(monthStart, monthEnd),
+    ])
       .then(([asg, cal]) => {
         setAssignments(asg)
         setItems(cal)
