@@ -7,7 +7,10 @@ export interface SignupPayload {
   email: string
   password: string
   generation: number
-  part: string
+  /** 가입할 때 본인이 고르는 플랜. 이후 변경은 관리자만 할 수 있다. 미선택이면 null. */
+  plan_id: number | null
+  /** 가입할 때 본인이 고르는 트랙(과정). 여러 개를 함께 수강할 수 있다. */
+  track_ids: number[]
   security_question: string
   security_answer: string
 }

@@ -18,7 +18,6 @@ export interface User {
   student_id: string
   email: string
   generation: number
-  part: string
   /** MENTOR는 과제를 등록하고 본인 과제를 채점한다. 회원 관리는 ADMIN 전용. */
   role: 'MEMBER' | 'MENTOR' | 'ADMIN'
   is_active: boolean

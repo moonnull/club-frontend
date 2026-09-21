@@ -95,7 +95,7 @@ export default function ProfilePage() {
         <div className="mb-5 pb-5 border-b border-gray-100 dark:border-gray-800 text-sm text-gray-400 space-y-1">
           <p>이메일: {me.email}</p>
           <p>학번: {me.student_id}</p>
-          <p>{me.generation}기 · {me.part}</p>
+          <p>{me.generation}기</p>
           <p>
             트랙:{' '}
             {me.tracks && me.tracks.length > 0
