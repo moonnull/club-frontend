@@ -23,6 +23,7 @@ import { getMe } from '@/lib/api/auth'
 import { getStoredUser, saveAuth } from '@/lib/session'
 import { ROLE_LABEL } from '@/lib/role'
 import type { BoardCategory, Plan, Track, User } from '@/lib/types'
+import KeyedListSection from '@/components/admin/KeyedListSection'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
 import TrackMultiSelect from '@/components/TrackMultiSelect'
@@ -54,12 +55,6 @@ export default function AdminPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [boardError, setBoardError] = useState('')
-  const [trackError, setTrackError] = useState('')
-  const [planError, setPlanError] = useState('')
-  const [newBoard, setNewBoard] = useState({ key: '', name: '', admin_only: false })
-  const [newTrack, setNewTrack] = useState({ key: '', name: '' })
-  const [newPlan, setNewPlan] = useState({ key: '', name: '' })
 
   // 회원 목록 찾기 도구. 가입순으로만 늘어놓으면 배정할 사람을 눈으로 찾아야 해서
   // 인원이 늘수록 시간이 급격히 늘어난다.
@@ -187,16 +182,12 @@ export default function AdminPage() {
     }
   }
 
-  async function addBoard(e: React.FormEvent) {
-    e.preventDefault()
-    setBoardError('')
-    try {
-      await createBoard(newBoard)
-      setNewBoard({ key: '', name: '', admin_only: false })
-      loadBoards()
-    } catch (err: unknown) {
-      setBoardError(errorMessage(err))
-    }
+  // 입력값과 오류는 구역(KeyedListSection)이 들고 있다. 여기는 보내기만 하고,
+  // 실패하면 그대로 던져서 폼 안에 표시되게 한다.
+  async function addBoard(key: string, name: string) {
+    // 새 게시판은 전체 작성 허용으로 시작한다. 목록에서 바로 전환할 수 있다.
+    await createBoard({ key, name, admin_only: false })
+    loadBoards()
   }
 
   async function renameBoard(board: BoardCategory) {
@@ -234,16 +225,11 @@ export default function AdminPage() {
     }
   }
 
-  async function addTrack(e: React.FormEvent) {
-    e.preventDefault()
-    setTrackError('')
-    try {
-      await createTrack(newTrack)
-      setNewTrack({ key: '', name: '' })
-      loadTracks()
-    } catch (err: unknown) {
-      setTrackError(errorMessage(err))
-    }
+  // 입력값과 오류는 구역(KeyedListSection)이 들고 있다. 여기는 보내기만 하고,
+  // 실패하면 그대로 던져서 폼 안에 표시되게 한다.
+  async function addTrack(key: string, name: string) {
+    await createTrack({ key, name })
+    loadTracks()
   }
 
   async function renameTrack(track: Track) {
@@ -276,16 +262,11 @@ export default function AdminPage() {
     listPlans().then(setPlans).catch((err) => toast(errorMessage(err), 'error'))
   }
 
-  async function addPlan(e: React.FormEvent) {
-    e.preventDefault()
-    setPlanError('')
-    try {
-      await createPlan(newPlan)
-      setNewPlan({ key: '', name: '' })
-      loadPlans()
-    } catch (err: unknown) {
-      setPlanError(errorMessage(err))
-    }
+  // 입력값과 오류는 구역(KeyedListSection)이 들고 있다. 여기는 보내기만 하고,
+  // 실패하면 그대로 던져서 폼 안에 표시되게 한다.
+  async function addPlan(key: string, name: string) {
+    await createPlan({ key, name })
+    loadPlans()
   }
 
   async function renamePlan(plan: Plan) {
@@ -700,209 +681,52 @@ export default function AdminPage() {
             )}
           </section>
 
-          <section>
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
-              게시판 관리 ({boards.length})
-            </h2>
-            <div className="space-y-2 mb-4">
-              {boards.map((b) => (
-                <div
-                  key={b.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
-                >
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-gray-100">
-                      {b.name} <span className="text-gray-400 font-normal">· {b.key}</span>
-                      {b.admin_only && (
-                        <span className="ml-2 text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
-                          관리자 전용 작성
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => renameBoard(b)}
-                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
-                    >
-                      이름 수정
-                    </button>
-                    <button
-                      onClick={() => toggleAdminOnly(b)}
-                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
-                    >
-                      {b.admin_only ? '전체 작성 허용' : '관리자 전용으로'}
-                    </button>
-                    <button
-                      onClick={() => removeBoard(b)}
-                      className="text-sm text-gray-400 hover:text-red-500 px-3 py-1.5 transition"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <form
-              onSubmit={addBoard}
-              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
-            >
-              <input
-                value={newBoard.key}
-                onChange={(e) => setNewBoard((b) => ({ ...b, key: e.target.value.toUpperCase() }))}
-                placeholder="키 (예: STUDY)"
-                required
-                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <input
-                value={newBoard.name}
-                onChange={(e) => setNewBoard((b) => ({ ...b, name: e.target.value }))}
-                placeholder="이름 (예: 스터디)"
-                required
-                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 select-none">
-                <input
-                  type="checkbox"
-                  checked={newBoard.admin_only}
-                  onChange={(e) => setNewBoard((b) => ({ ...b, admin_only: e.target.checked }))}
-                  className="rounded"
-                />
-                관리자만 작성
-              </label>
+          <KeyedListSection
+            title="게시판 관리"
+            className=""
+            items={boards}
+            keyPlaceholder="키 (예: STUDY)"
+            namePlaceholder="이름 (예: 스터디)"
+            onAdd={addBoard}
+            onRename={renameBoard}
+            onDelete={removeBoard}
+            renderBadge={(b) =>
+              b.admin_only && (
+                <span className="ml-2 text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
+                  관리자 전용 작성
+                </span>
+              )
+            }
+            renderExtraAction={(b) => (
               <button
-                type="submit"
-                className="text-sm btn-primary px-3 py-1.5 rounded-lg font-medium transition"
+                onClick={() => toggleAdminOnly(b)}
+                className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
               >
-                추가
+                {b.admin_only ? '전체 작성 허용' : '관리자 전용으로'}
               </button>
-              {boardError && <p className="w-full text-red-500 text-xs">{boardError}</p>}
-            </form>
-          </section>
+            )}
+          />
 
-          <section className="mt-10">
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
-              트랙 관리 ({tracks.length})
-            </h2>
-            <div className="space-y-2 mb-4">
-              {tracks.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
-                >
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-gray-100">
-                      {t.name} <span className="text-gray-400 font-normal">· {t.key}</span>
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => renameTrack(t)}
-                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
-                    >
-                      이름 수정
-                    </button>
-                    <button
-                      onClick={() => removeTrack(t)}
-                      className="text-sm text-gray-400 hover:text-red-500 px-3 py-1.5 transition"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <KeyedListSection
+            title="트랙 관리"
+            items={tracks}
+            keyPlaceholder="키 (예: REVERSING)"
+            namePlaceholder="이름 (예: 리버싱)"
+            onAdd={addTrack}
+            onRename={renameTrack}
+            onDelete={removeTrack}
+          />
 
-            <form
-              onSubmit={addTrack}
-              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
-            >
-              <input
-                value={newTrack.key}
-                onChange={(e) => setNewTrack((t) => ({ ...t, key: e.target.value.toUpperCase() }))}
-                placeholder="키 (예: REVERSING)"
-                required
-                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <input
-                value={newTrack.name}
-                onChange={(e) => setNewTrack((t) => ({ ...t, name: e.target.value }))}
-                placeholder="이름 (예: 리버싱)"
-                required
-                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <button
-                type="submit"
-                className="text-sm btn-primary px-3 py-1.5 rounded-lg font-medium transition"
-              >
-                추가
-              </button>
-              {trackError && <p className="w-full text-red-500 text-xs">{trackError}</p>}
-            </form>
-          </section>
-
-          <section className="mt-10">
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
-              플랜 관리 ({plans.length})
-            </h2>
-            <div className="space-y-2 mb-4">
-              {plans.map((pl) => (
-                <div
-                  key={pl.id}
-                  className="flex items-center justify-between bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
-                >
-                  <p className="font-medium text-gray-800 dark:text-gray-100">
-                    {pl.name} <span className="text-gray-400 font-normal">· {pl.key}</span>
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => renamePlan(pl)}
-                      className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 transition"
-                    >
-                      이름 수정
-                    </button>
-                    <button
-                      onClick={() => removePlan(pl)}
-                      className="text-sm text-gray-400 hover:text-red-500 px-3 py-1.5 transition"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {plans.length === 0 && (
-                <p className="text-sm text-gray-400">등록된 플랜이 없습니다.</p>
-              )}
-            </div>
-
-            <form
-              onSubmit={addPlan}
-              className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3"
-            >
-              <input
-                value={newPlan.key}
-                onChange={(e) => setNewPlan((pl) => ({ ...pl, key: e.target.value.toUpperCase() }))}
-                placeholder="키 (예: CHALLENGER)"
-                required
-                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <input
-                value={newPlan.name}
-                onChange={(e) => setNewPlan((pl) => ({ ...pl, name: e.target.value }))}
-                placeholder="이름 (예: Challenger's Plan)"
-                required
-                className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[140px] focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <button
-                type="submit"
-                className="text-sm btn-primary px-3 py-1.5 rounded-lg font-medium transition"
-              >
-                추가
-              </button>
-              {planError && <p className="w-full text-red-500 text-xs">{planError}</p>}
-            </form>
-          </section>
+          <KeyedListSection
+            title="플랜 관리"
+            items={plans}
+            keyPlaceholder="키 (예: CHALLENGER)"
+            namePlaceholder="이름 (예: Challenger's Plan)"
+            emptyText="등록된 플랜이 없습니다."
+            onAdd={addPlan}
+            onRename={renamePlan}
+            onDelete={removePlan}
+          />
         </>
       )}
     </div>
