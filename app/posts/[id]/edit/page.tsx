@@ -1,15 +1,15 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { listBoards } from '@/lib/api/boards'
 import { getPost, updatePost } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
-import ImageInsertButton from '@/components/ImageInsertButton'
+import FormHeader from '@/components/FormHeader'
+import LegacyContentEditor from '@/components/LegacyContentEditor'
 import RichTextEditor from '@/components/RichTextEditor'
 import { isRichTextContent } from '@/components/PostContent'
 import type { Post, UploadResult, User } from '@/lib/types'
-import { X } from 'lucide-react'
 
 export default function EditPostPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,7 +25,6 @@ export default function EditPostPage() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [notFound, setNotFound] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     listBoards().then((boards) =>
@@ -50,18 +49,6 @@ export default function EditPostPage() {
       })
       .catch(() => setNotFound(true))
   }, [id])
-
-  function insertImage(url: string) {
-    const snippet = `![image](${url})`
-    const el = textareaRef.current
-    if (!el) {
-      setContent((c) => `${c}\n${snippet}\n`)
-      return
-    }
-    const start = el.selectionStart ?? content.length
-    const end = el.selectionEnd ?? content.length
-    setContent(content.slice(0, start) + `\n${snippet}\n` + content.slice(end))
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -104,22 +91,11 @@ export default function EditPostPage() {
 
   return (
     <form onSubmit={submit} className="relative flex flex-col h-[calc(100vh-56px)]">
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200/60 dark:border-gray-800/60 shrink-0">
-        <div>
-          <h1 className="text-xl font-bold brand-text">게시글 수정</h1>
-          <p className="text-xs text-gray-400 mt-1">
-            게시판: {boardMap[post.board_type] ?? post.board_type}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => router.push(`/posts/${id}`)}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white panel rounded-lg px-3 py-1.5 transition"
-        >
-          <X aria-hidden="true" className="size-3.5" />
-          작성 취소
-        </button>
-      </div>
+      <FormHeader
+        heading="게시글 수정"
+        subtitle={`게시판: ${boardMap[post.board_type] ?? post.board_type}`}
+        onCancel={() => router.push(`/posts/${id}`)}
+      />
 
       <div className="flex-1 min-h-0 flex flex-col gap-3 px-8 py-5">
         <input
@@ -138,17 +114,11 @@ export default function EditPostPage() {
         />
         {isLegacy ? (
           <>
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="내용을 입력하세요"
-              required
+            <LegacyContentEditor
+              content={content}
+              onChange={setContent}
               className="w-full flex-1 min-h-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 resize-none focus:outline-none"
             />
-            <div className="shrink-0">
-              <ImageInsertButton onUploaded={insertImage} />
-            </div>
           </>
         ) : (
           <RichTextEditor

@@ -5,9 +5,9 @@ import { createPost } from '@/lib/api/posts'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import AttachmentPicker from '@/components/AttachmentPicker'
+import FormHeader from '@/components/FormHeader'
 import RichTextEditor from '@/components/RichTextEditor'
 import type { Track, UploadResult, User } from '@/lib/types'
-import { X } from 'lucide-react'
 
 export default function NewNoticePage() {
   const router = useRouter()
@@ -54,17 +54,7 @@ export default function NewNoticePage() {
 
   return (
     <form onSubmit={submit} className="flex flex-col h-[calc(100vh-56px)]">
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-        <h1 className="text-xl font-bold brand-text">공지 작성</h1>
-        <button
-          type="button"
-          onClick={() => router.push('/notices')}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 transition"
-        >
-          <X aria-hidden="true" className="size-3.5" />
-          작성 취소
-        </button>
-      </div>
+      <FormHeader heading="공지 작성" onCancel={() => router.push('/notices')} />
 
       <div className="flex-1 min-h-0 flex flex-col gap-3 px-8 py-5">
         <input
