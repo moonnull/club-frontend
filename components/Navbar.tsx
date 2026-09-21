@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
+  NOTIFICATION_PAGE_SIZE,
   deleteNotification,
   listNotifications,
   markAllNotificationsRead,
@@ -39,6 +40,9 @@ export default function Navbar() {
   const [unread, setUnread] = useState(0)
   const [wsStatus, setWsStatus] = useState<ConnectionStatus>('connecting')
   const [notifications, setNotifications] = useState<Notification[]>([])
+  // 마지막 페이지가 가득 찼다면 더 있을 수 있다. 빈 페이지를 받아야 끝이다.
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [open, setOpen] = useState(false)
   const bellRef = useRef<HTMLDivElement>(null)
 
@@ -124,9 +128,27 @@ export default function Navbar() {
     setOpen(next)
     if (next) {
       listNotifications()
-        .then(setNotifications)
+        .then((rows) => {
+          setNotifications(rows)
+          setHasMore(rows.length === NOTIFICATION_PAGE_SIZE)
+        })
         // 사용자가 방금 연 목록이다. 조용히 비우면 "알림이 없다"는 뜻으로 읽힌다.
         .catch((err) => toast(errorMessage(err), 'error'))
+    }
+  }
+
+  async function loadMore() {
+    const last = notifications[notifications.length - 1]
+    if (!last || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const rows = await listNotifications(last.id)
+      setNotifications((prev) => [...prev, ...rows])
+      setHasMore(rows.length === NOTIFICATION_PAGE_SIZE)
+    } catch (err: unknown) {
+      toast(errorMessage(err), 'error')
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -285,6 +307,15 @@ export default function Navbar() {
                     </li>
                   ))}
                 </ul>
+              )}
+              {hasMore && (
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full py-3 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white border-t border-gray-100 dark:border-gray-800 transition disabled:opacity-50"
+                >
+                  {loadingMore ? '불러오는 중...' : '더 보기'}
+                </button>
               )}
             </div>
           )}
