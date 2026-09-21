@@ -111,6 +111,8 @@ function statusMessage(status: number): string {
   if (status === 403) return '권한이 없습니다.'
   if (status === 404) return '요청한 정보를 찾을 수 없습니다.'
   if (status === 413) return '파일 크기가 너무 큽니다.'
+  // 서버는 보통 제한 단위까지 담은 detail을 주고, 그때는 이 문구가 쓰이지 않는다.
+  // 여기까지 오는 건 프록시가 본문 없이 429를 돌려준 경우다.
   if (status === 429) return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
   if (status >= 500) return `서버에 일시적인 문제가 발생했습니다. (${status})`
   return `요청을 처리하지 못했습니다. (${status})`
