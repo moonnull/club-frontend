@@ -27,5 +27,10 @@ jobs:
       - name: 린트
         run: npm run lint
 
+      # CI는 Node 20이라 문제없지만, 로컬 Node 25에서는 런타임이 끼워 넣는
+      # 빈 localStorage가 jsdom의 것을 가린다 (vitest.setup.ts에서 되돌린다).
+      - name: 테스트
+        run: npm test
+
       - name: 빌드
         run: npm run build
