@@ -1,9 +1,11 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getAssignment, updateAssignment } from '@/lib/api/assignments'
 import { notifyAssignmentListChanged } from '@/lib/events'
 import { getStoredUser } from '@/lib/session'
+import LoadFailure from '@/components/LoadFailure'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import AssignmentScopeFields from '@/components/AssignmentScopeFields'
@@ -32,11 +34,11 @@ export default function EditAssignmentPage() {
   const [files, setFiles] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState<unknown>(null)
 
   useEffect(() => {
     setAssignment(null)
-    setNotFound(false)
+    setLoadError(null)
     setTitle('')
     setContent('')
     setStartAt('')
@@ -53,7 +55,7 @@ export default function EditAssignmentPage() {
         setPlanId(a.plan ? String(a.plan.id) : '')
         setFiles(a.files)
       })
-      .catch(() => setNotFound(true))
+      .catch(setLoadError)
   }, [id])
 
   async function submit(e: React.FormEvent) {
@@ -73,17 +75,15 @@ export default function EditAssignmentPage() {
       notifyAssignmentListChanged()
       router.push(`/assignments/${id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
   }
 
-  if (notFound) {
+  if (loadError) {
     return (
-      <div className="flex items-center justify-center py-24 text-sm text-gray-400">
-        과제를 찾을 수 없습니다.
-      </div>
+      <LoadFailure error={loadError} notFoundText="과제를 찾을 수 없습니다." className="py-24" />
     )
   }
 

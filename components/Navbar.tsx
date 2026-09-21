@@ -62,6 +62,8 @@ export default function Navbar() {
     // 초기값은 REST로 한 번 받아오고, 이후 갱신은 WebSocket 실시간 push로 처리한다.
     unreadCount()
       .then((r) => setUnread(r.count))
+      // 배지 숫자를 못 받은 것뿐이다. 알림으로 방해할 일이 아니고,
+      // 이후 WebSocket push가 오면 저절로 맞춰진다.
       .catch(() => {})
 
     const token = localStorage.getItem('token')
@@ -96,6 +98,8 @@ export default function Navbar() {
     const timer = setInterval(() => {
       if (Date.now() - lastActivityAt > HEARTBEAT_INTERVAL_MS) return
       // 응답 헤더로 연장된 토큰이 내려오고, api 클라이언트가 알아서 갈아끼운다.
+      // 세션 연장용 배경 요청이다. 실패해도 사용자가 할 수 있는 일이 없고,
+      // 토큰이 만료된 경우라면 api 클라이언트가 이미 로그인 화면으로 보낸다.
       getMe().catch(() => {})
     }, HEARTBEAT_INTERVAL_MS)
 
@@ -121,7 +125,8 @@ export default function Navbar() {
     if (next) {
       listNotifications()
         .then(setNotifications)
-        .catch(() => {})
+        // 사용자가 방금 연 목록이다. 조용히 비우면 "알림이 없다"는 뜻으로 읽힌다.
+        .catch((err) => toast(errorMessage(err), 'error'))
     }
   }
 

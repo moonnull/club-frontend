@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createPost } from '@/lib/api/posts'
@@ -38,7 +39,7 @@ export default function NewNoticePage() {
       })
       router.push(`/notices/${post.id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }

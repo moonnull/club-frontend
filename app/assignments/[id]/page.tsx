@@ -26,6 +26,7 @@ import { clearDraft, loadDraft, pruneExpiredDrafts, saveDraft } from '@/lib/draf
 import { notifyAssignmentListChanged } from '@/lib/events'
 import { canReviewAssignment, isAssignmentStaff } from '@/lib/role'
 import { realtimeHub } from '@/lib/ws'
+import LoadFailure from '@/components/LoadFailure'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import { formatDeadline, formatTimestamp, isBeforeStart, isPastDeadline, toDate } from '@/lib/formatDeadline'
@@ -542,7 +543,7 @@ export default function AssignmentDetailPage() {
   // 그 외에는 탭 자체를 감추고 목록 조회도 하지 않는다 (백엔드가 403을 준다).
   const canReview = canReviewAssignment(user, assignment?.author.id)
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState<unknown>(null)
 
   const [rightTab, setRightTab] = useState<'write' | 'list' | 'qna'>('write')
   const [mySubmission, setMySubmission] = useState<Submission | null>(null)
@@ -573,7 +574,7 @@ export default function AssignmentDetailPage() {
 
   useEffect(() => {
     setLoading(true)
-    setNotFound(false)
+    setLoadError(null)
     setAssignment(null)
     setMySubmission(null)
     setSubmissions([])
@@ -622,7 +623,7 @@ export default function AssignmentDetailPage() {
       )
     }
     Promise.all(requests)
-      .catch(() => setNotFound(true))
+      .catch(setLoadError)
       .finally(() => setLoading(false))
   }, [id, user?.id, user?.role])
 
@@ -630,7 +631,7 @@ export default function AssignmentDetailPage() {
   // 서버 초안(mySubmission)과 다를 때만 되살린다 — 같은 내용을 두고
   // "복구했습니다"라고 알리면 잃은 게 없는데 잃은 것처럼 보인다.
   useEffect(() => {
-    if (loading || notFound || userId === undefined) return
+    if (loading || loadError || userId === undefined) return
     pruneExpiredDrafts()
     const draft = loadDraft(id, userId)
     if (draft) {
@@ -645,7 +646,7 @@ export default function AssignmentDetailPage() {
     }
     setDraftReady(true)
     // mySubmission은 이 효과 안에서 바꾸지 않으므로 의존성에 둬도 반복되지 않는다.
-  }, [loading, notFound, id, userId, mySubmission])
+  }, [loading, loadError, id, userId, mySubmission])
 
   // 입력이 멈추면 브라우저에 보관한다. 매 글자마다 쓰면 긴 글에서 부담이 된다.
   useEffect(() => {
@@ -722,7 +723,7 @@ export default function AssignmentDetailPage() {
       }
       await refreshSubmissions()
     } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setSubmitError(errorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -772,8 +773,8 @@ export default function AssignmentDetailPage() {
   if (loading) {
     return <div className="flex items-center justify-center h-full text-sm text-gray-400">불러오는 중...</div>
   }
-  if (notFound || !assignment) {
-    return <div className="flex items-center justify-center h-full text-sm text-gray-400">과제를 찾을 수 없습니다.</div>
+  if (loadError || !assignment) {
+    return <LoadFailure error={loadError} notFoundText="과제를 찾을 수 없습니다." className="h-full" />
   }
 
   const canManage = user && (user.id === assignment.author.id || user.role === 'ADMIN')

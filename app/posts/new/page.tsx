@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { listBoards } from '@/lib/api/boards'
@@ -43,7 +44,7 @@ export default function NewPostPage() {
       })
       router.push(`/posts/${post.id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }

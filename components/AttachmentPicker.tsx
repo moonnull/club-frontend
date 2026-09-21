@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useRef, useState } from 'react'
 import { uploadFile } from '@/lib/api/uploads'
 import type { UploadResult } from '@/lib/types'
@@ -25,7 +26,7 @@ export default function AttachmentPicker({
       const uploaded = await Promise.all(Array.from(files).map((f) => uploadFile(f)))
       onChange([...value, ...uploaded])
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.')
+      setError(errorMessage(err, '파일 업로드에 실패했습니다.'))
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''

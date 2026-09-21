@@ -99,16 +99,18 @@ export default function AdminPage() {
     setLoading(true)
     listUsers()
       .then(setUsers)
-      .catch((err) => setError(err instanceof Error ? err.message : '오류가 발생했습니다.'))
+      .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false))
   }
 
+  // 보조 목록의 실패도 알린다. 삼키면 추가·삭제 후 목록만 낡은 채로 남고
+  // 사용자는 동작이 안 먹은 건지 갱신이 안 된 건지 구분할 수 없다.
   function loadBoards() {
-    listBoards().then(setBoards)
+    listBoards().then(setBoards).catch((err) => toast(errorMessage(err), 'error'))
   }
 
   function loadTracks() {
-    listTracks().then(setTracks)
+    listTracks().then(setTracks).catch((err) => toast(errorMessage(err), 'error'))
   }
 
   async function approve(userId: number) {
@@ -193,7 +195,7 @@ export default function AdminPage() {
       setNewBoard({ key: '', name: '', admin_only: false })
       loadBoards()
     } catch (err: unknown) {
-      setBoardError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setBoardError(errorMessage(err))
     }
   }
 
@@ -240,7 +242,7 @@ export default function AdminPage() {
       setNewTrack({ key: '', name: '' })
       loadTracks()
     } catch (err: unknown) {
-      setTrackError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setTrackError(errorMessage(err))
     }
   }
 
@@ -271,7 +273,7 @@ export default function AdminPage() {
   }
 
   function loadPlans() {
-    listPlans().then(setPlans).catch(() => {})
+    listPlans().then(setPlans).catch((err) => toast(errorMessage(err), 'error'))
   }
 
   async function addPlan(e: React.FormEvent) {
@@ -282,7 +284,7 @@ export default function AdminPage() {
       setNewPlan({ key: '', name: '' })
       loadPlans()
     } catch (err: unknown) {
-      setPlanError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setPlanError(errorMessage(err))
     }
   }
 

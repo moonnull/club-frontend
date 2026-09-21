@@ -5,6 +5,31 @@ const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 /** 서버가 연장된 토큰을 실어 보내는 헤더 (app/core/deps.py의 RENEWED_TOKEN_HEADER) */
 const RENEWED_TOKEN_HEADER = 'X-Renewed-Token'
 
+/**
+ * API 호출 실패. status로 실패의 "종류"를 구분한다.
+ *
+ * 이게 없으면 화면은 404(없는 글)와 503(서버가 죽음)과 네트워크 단절을
+ * 구분할 수 없어, 세 경우 모두 "찾을 수 없습니다"로 안내하게 된다.
+ * 사용자는 글이 지워진 줄 알고, 실제 원인은 드러나지 않는다.
+ *
+ * Error를 상속하므로 기존의 err instanceof Error 검사는 그대로 동작한다.
+ * 응답 자체를 받지 못한 경우(네트워크 단절)는 status가 0이다.
+ */
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
+/** 요청한 대상이 없어서 실패한 것인가. 그 외의 실패와 안내 문구가 달라야 한다. */
+export function isNotFound(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 404
+}
+
 function getToken(): string | null {
   return typeof window !== 'undefined' ? localStorage.getItem('token') : null
 }
@@ -24,7 +49,7 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
     res = await fetch(`${BASE}${path}`, { ...init, headers })
   } catch {
     // fetch 자체가 실패하는 건 네트워크 단절이거나 서버가 응답하지 않는 경우다.
-    throw new Error('서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.')
+    throw new ApiError('서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.', 0)
   }
 
   // 슬라이딩 세션 — 서버는 활동 중인 세션의 토큰을 새로 발급해 이 헤더로 돌려준다.
@@ -66,7 +91,7 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
       // 겪지도 않은 만료를 겪었다고 하는 셈이다.
       window.location.href = tok ? '/login?reason=expired' : '/login'
     }
-    throw new Error(detailOf(data) ?? statusMessage(res.status))
+    throw new ApiError(detailOf(data) ?? statusMessage(res.status), res.status)
   }
   return data as T
 }
