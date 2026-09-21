@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createAssignment } from '@/lib/api/assignments'
@@ -41,7 +42,7 @@ export default function NewAssignmentPage() {
       notifyAssignmentListChanged()
       router.push(`/assignments/${assignment.id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }

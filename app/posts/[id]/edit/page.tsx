@@ -1,9 +1,11 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { listBoards } from '@/lib/api/boards'
 import { getPost, updatePost } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
+import LoadFailure from '@/components/LoadFailure'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import FormHeader from '@/components/FormHeader'
 import LegacyContentEditor from '@/components/LegacyContentEditor'
@@ -24,7 +26,7 @@ export default function EditPostPage() {
   const [attachments, setAttachments] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState<unknown>(null)
 
   useEffect(() => {
     listBoards().then((boards) =>
@@ -34,7 +36,7 @@ export default function EditPostPage() {
 
   useEffect(() => {
     setPost(null)
-    setNotFound(false)
+    setLoadError(null)
     setTitle('')
     setContent('')
     setAttachments([])
@@ -47,7 +49,7 @@ export default function EditPostPage() {
         setIsLegacy(!isRichTextContent(p.content))
         setAttachments(p.attachments ?? [])
       })
-      .catch(() => setNotFound(true))
+      .catch(setLoadError)
   }, [id])
 
   async function submit(e: React.FormEvent) {
@@ -58,18 +60,14 @@ export default function EditPostPage() {
       await updatePost(id, { title, content, summary: summary.trim(), attachments })
       router.push(`/posts/${id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
   }
 
-  if (notFound) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-56px)] text-sm text-gray-400">
-        게시글을 찾을 수 없습니다.
-      </div>
-    )
+  if (loadError) {
+    return <LoadFailure error={loadError} notFoundText="게시글을 찾을 수 없습니다." />
   }
 
   if (!post || !user) {

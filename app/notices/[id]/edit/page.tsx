@@ -1,9 +1,11 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getPost, updatePost } from '@/lib/api/posts'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
+import LoadFailure from '@/components/LoadFailure'
 import AttachmentPicker from '@/components/AttachmentPicker'
 import FormHeader from '@/components/FormHeader'
 import LegacyContentEditor from '@/components/LegacyContentEditor'
@@ -24,7 +26,7 @@ export default function EditNoticePage() {
   const [attachments, setAttachments] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState<unknown>(null)
 
   useEffect(() => {
     listTracks().then(setTracks)
@@ -32,7 +34,7 @@ export default function EditNoticePage() {
 
   useEffect(() => {
     setNotice(null)
-    setNotFound(false)
+    setLoadError(null)
     setTitle('')
     setContent('')
     setAttachments([])
@@ -45,7 +47,7 @@ export default function EditNoticePage() {
         setIsLegacy(!isRichTextContent(p.content))
         setAttachments(p.attachments ?? [])
       })
-      .catch(() => setNotFound(true))
+      .catch(setLoadError)
   }, [id])
 
   async function submit(e: React.FormEvent) {
@@ -56,18 +58,14 @@ export default function EditNoticePage() {
       await updatePost(id, { title, content, track_id: trackId ? Number(trackId) : null, attachments })
       router.push(`/notices/${id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
   }
 
-  if (notFound) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-56px)] text-sm text-gray-400">
-        공지사항을 찾을 수 없습니다.
-      </div>
-    )
+  if (loadError) {
+    return <LoadFailure error={loadError} notFoundText="공지사항을 찾을 수 없습니다." />
   }
   if (!notice || !user) {
     return (

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { createComment, deleteComment as apiDeleteComment, deletePost, getPost, listComments } from '@/lib/api/posts'
 import { getStoredUser } from '@/lib/session'
 import { realtimeHub } from '@/lib/ws'
+import LoadFailure from '@/components/LoadFailure'
 import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import { toDate } from '@/lib/formatDeadline'
@@ -23,13 +24,13 @@ export default function NoticeDetailPage() {
   const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState<unknown>(null)
 
   useEffect(() => {
     setLoading(true)
     setNotice(null)
     setComments([])
-    setNotFound(false)
+    setLoadError(null)
     Promise.all([
       getPost(id),
       listComments(id),
@@ -38,7 +39,7 @@ export default function NoticeDetailPage() {
         setNotice(p)
         setComments(c)
       })
-      .catch(() => setNotFound(true))
+      .catch(setLoadError)
       .finally(() => setLoading(false))
   }, [id])
 
@@ -94,12 +95,8 @@ export default function NoticeDetailPage() {
       </div>
     )
   }
-  if (notFound || !notice) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-56px)] text-sm text-gray-400">
-        공지사항을 찾을 수 없습니다.
-      </div>
-    )
+  if (loadError || !notice) {
+    return <LoadFailure error={loadError} notFoundText="공지사항을 찾을 수 없습니다." />
   }
 
   const canManage = user && (user.id === notice.author.id || user.role === 'ADMIN')

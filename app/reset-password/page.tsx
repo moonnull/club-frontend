@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
@@ -25,7 +26,7 @@ export default function ResetPasswordPage() {
       await resetPassword(token, password)
       router.push('/login?reason=reset')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }

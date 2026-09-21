@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProfile } from '@/lib/api/auth'
@@ -81,7 +82,7 @@ export default function ProfilePage() {
       setSecurityAnswer('')
       setSuccess('회원정보가 수정되었습니다.')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }

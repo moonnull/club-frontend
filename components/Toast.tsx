@@ -2,6 +2,22 @@
 import { X } from 'lucide-react'
 import { createContext, useCallback, useContext, useRef, useState } from 'react'
 
+/**
+ * 실패를 사용자에게 알리는 방법은 네 가지이고, 고르는 기준은 "사용자가 지금
+ * 무엇을 하고 있었는가"다. 섞어 쓰면 어떤 실패는 알려주고 어떤 실패는 아무 일도
+ * 없었던 것처럼 보여서, 사용자가 동작이 먹은 건지 아닌지 판단할 수 없게 된다.
+ *
+ * 1. 폼 제출 실패          → setError로 폼 안에 남긴다.
+ *    입력을 고쳐야 하므로 몇 초 뒤 사라지면 안 되고, 방금 누른 버튼 옆에 있어야 한다.
+ * 2. 떠 있는 화면에서의 동작 실패 → toast(errorMessage(err), 'error')
+ *    삭제·채점·배정처럼 화면은 그대로인데 동작만 실패한 경우.
+ * 3. 화면 진입 로드 실패    → LoadFailure 컴포넌트
+ *    보여줄 내용 자체가 없다. 404와 그 외(서버 장애·네트워크 단절)를 구분해
+ *    안내하고, 404가 아니면 다시 시도할 길을 남긴다.
+ * 4. 부가 기능 실패        → 조용히 무시하되, 왜 무시해도 되는지 주석을 단다.
+ *    자동 보관·읽음 처리·배지 폴링처럼 사용자가 시작하지 않았고 할 수 있는 일도 없는 것.
+ *    사용자가 방금 누른 결과라면 여기에 해당하지 않는다.
+ */
 export type ToastVariant = 'info' | 'error'
 type ToastItem = { id: number; message: string; variant: ToastVariant }
 

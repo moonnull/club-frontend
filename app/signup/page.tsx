@@ -1,4 +1,5 @@
 'use client'
+import { errorMessage } from '@/components/Toast'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -82,7 +83,7 @@ export default function SignupPage() {
       })
       router.push('/login?pending=1')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }

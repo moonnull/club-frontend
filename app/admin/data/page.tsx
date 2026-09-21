@@ -112,6 +112,8 @@ export default function AdminDataPage() {
   const [postRows, setPostRows] = useState<{ rows: PostRow[]; total: number } | null>(null)
   const [asgRows, setAsgRows] = useState<{ rows: AssignmentRow[]; total: number } | null>(null)
   const [usage, setUsage] = useState<StorageUsage | null>(null)
+  // 용량 조회 실패를 삼키면 패널이 '불러오는 중...'에 영원히 머문다.
+  const [usageError, setUsageError] = useState<unknown>(null)
 
   useEffect(() => {
     if (!getStoredUser<User>()) {
@@ -133,7 +135,7 @@ export default function AdminDataPage() {
         // 현황 표까지 함께 막히면 안 된다.
         getStorageUsage()
           .then(setUsage)
-          .catch(() => {})
+          .catch(setUsageError)
       })
       .catch(() => router.replace('/login'))
   }, [])
@@ -205,11 +207,14 @@ export default function AdminDataPage() {
   function refreshStats() {
     getStorageStats()
       .then((s) => setStats(s.tables))
-      .catch(() => {})
+      .catch((err) => toast(errorMessage(err), 'error'))
     // 지우고 나면 용량도 줄어야 하므로 함께 갱신한다.
     getStorageUsage()
-      .then(setUsage)
-      .catch(() => {})
+      .then((u) => {
+        setUsage(u)
+        setUsageError(null)
+      })
+      .catch(setUsageError)
   }
 
   if (!me || me.role !== 'ADMIN') return null
@@ -235,7 +240,13 @@ export default function AdminDataPage() {
       {/* ── 남은 용량 ── */}
       <section className="mb-10">
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">남은 용량</h2>
-        {usage === null ? (
+        {usageError ? (
+          // 용량은 Cloudinary API를 타느라 따로 실패할 수 있다. 나머지 화면은
+          // 그대로 쓸 수 있으므로 이 패널 안에서만 알린다.
+          <p className="text-sm text-gray-400">
+            용량 정보를 불러오지 못했습니다. ({errorMessage(usageError)})
+          </p>
+        ) : usage === null ? (
           <p className="text-sm text-gray-400">불러오는 중...</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
