@@ -24,7 +24,7 @@
     "lucide-react": "^1.40.0",
     "next": "^14.2.35",
     "react": "^18",
-    "react-dom": "^18",
+    "react-dom": "^19",
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {
@@ -34,7 +34,7 @@
     "@types/jsdom": "21.1.7",
     "@types/node": "^20",
     "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react-dom": "^19",
     "@vitejs/plugin-react": "4.3.4",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
