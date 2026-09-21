@@ -29,7 +29,8 @@ export default function TrackDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([listTracks(), listAssignments()])
+    // 이 트랙의 과제만 받는다. 전체를 받아 걸러내면 과제가 쌓일수록 무거워진다.
+    Promise.all([listTracks(), listAssignments({ trackId })])
       .then(([tracks, all]) => {
         setTrack(tracks.find((t) => t.id === trackId) ?? null)
         setAssignments(all)
@@ -55,6 +56,8 @@ export default function TrackDetailPage() {
   const items = useMemo(
     () =>
       assignments
+        // 서버가 이미 걸러 주지만, 실시간으로 들어오는 과제는 트랙을 가리지 않고
+        // 도착하므로 여기서 한 번 더 거른다.
         .filter((a) => a.track?.id === trackId)
         .sort((a, b) => toDate(a.start_at).getTime() - toDate(b.start_at).getTime()),
     [assignments, trackId],

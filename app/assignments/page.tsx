@@ -13,7 +13,8 @@ export default function AssignmentsIndexPage() {
   const [hasAssignments, setHasAssignments] = useState(false)
 
   useEffect(() => {
-    listAssignments().then((list) => {
+    // 첫 과제로 보내기만 하면 되므로 한 건만 받는다. 전체를 받을 이유가 없다.
+    listAssignments({ limit: 1 }).then((list) => {
       if (list.length > 0) {
         router.replace(`/assignments/${list[0].id}`)
       } else {

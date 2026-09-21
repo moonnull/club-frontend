@@ -2,13 +2,13 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, ChevronRight, Layers } from 'lucide-react'
-import { listAssignments } from '@/lib/api/assignments'
+import { getTrackSummaries } from '@/lib/api/assignments'
 import { listTracks } from '@/lib/api/tracks'
 import { getStoredUser } from '@/lib/session'
 import { isAssignmentStaff } from '@/lib/role'
 import { errorMessage, useToast } from '@/components/Toast'
-import { duration, isPastDeadline, toDate } from '@/lib/formatDeadline'
-import type { AssignmentListItem, Track, User } from '@/lib/types'
+import { duration, toDate } from '@/lib/formatDeadline'
+import type { Track, TrackAssignmentSummary, User } from '@/lib/types'
 
 export default function TracksPage() {
   const toast = useToast()
@@ -21,14 +21,16 @@ export default function TracksPage() {
   // 예전 세션의 localStorage 캐시에는 tracks가 없을 수 있다.
   const myTrackIds = me?.tracks?.map((t) => t.id) ?? []
   const [tracks, setTracks] = useState<Track[]>([])
-  const [assignments, setAssignments] = useState<AssignmentListItem[]>([])
+  // 카드에 필요한 건 트랙별 과제 수·기간·진행률뿐이다. 전체 과제를 받아
+  // 클라이언트에서 세면 과제가 쌓일수록 이 화면만 무거워진다.
+  const [summaries, setSummaries] = useState<TrackAssignmentSummary[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([listTracks(), listAssignments()])
-      .then(([t, a]) => {
+    Promise.all([listTracks(), getTrackSummaries()])
+      .then(([t, s]) => {
         setTracks(t)
-        setAssignments(a)
+        setSummaries(s)
       })
       .catch((err) => toast(errorMessage(err), 'error'))
       .finally(() => setLoading(false))
@@ -43,28 +45,26 @@ export default function TracksPage() {
     [tracks, isStaff, myTrackIds.join(',')],
   )
 
-  // 트랙별 요약(과제 수, 전체 기간, 진행률)을 한 번에 계산해 카드에 쓴다.
-  const summaries = useMemo(() => {
+  // 서버가 준 집계를 트랙 카드에 붙인다. 과제가 하나도 없는 트랙은
+  // 집계에 나타나지 않으므로 0으로 채운다.
+  const cards = useMemo(() => {
+    const byTrack = new Map(summaries.map((s) => [s.track_id, s]))
     return visibleTracks.map((track) => {
-      const items = assignments.filter((a) => a.track?.id === track.id)
-      const starts = items.map((a) => toDate(a.start_at).getTime())
-      const ends = items.map((a) => toDate(a.end_at).getTime())
-      const done = isStaff
-        ? items.filter((a) => isPastDeadline(a.end_at)).length
-        : items.filter((a) => a.submission_status === 'FINAL').length
+      const s = byTrack.get(track.id)
       return {
         track,
-        count: items.length,
+        count: s?.count ?? 0,
         span:
-          items.length > 0
-            ? duration(new Date(Math.min(...starts)), new Date(Math.max(...ends)))
+          s?.first_start_at && s.last_end_at
+            ? duration(toDate(s.first_start_at), toDate(s.last_end_at))
             : null,
-        done,
+        done: s?.done ?? 0,
       }
     })
-  }, [visibleTracks, assignments, isStaff])
+  }, [visibleTracks, summaries])
 
-  const untracked = assignments.filter((a) => !a.track).length
+  // 트랙이 지정되지 않은(전원 공통) 과제는 집계에서 track_id가 null인 항목이다.
+  const untracked = summaries.find((s) => s.track_id === null)?.count ?? 0
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -88,7 +88,7 @@ export default function TracksPage() {
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {summaries.map(({ track, count, span, done }) => (
+          {cards.map(({ track, count, span, done }) => (
             <Link
               key={track.id}
               href={`/tracks/${track.id}`}
