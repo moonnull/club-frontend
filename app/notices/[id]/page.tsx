@@ -9,7 +9,7 @@ import PostContent from '@/components/PostContent'
 import { toDownloadUrl } from '@/lib/downloadUrl'
 import { toDate } from '@/lib/formatDeadline'
 import type { Comment, Post, User } from '@/lib/types'
-import { errorMessage, useToast } from '@/components/Toast'
+import { useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { ArrowLeft, Paperclip } from 'lucide-react'
 

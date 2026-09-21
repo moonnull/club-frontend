@@ -12,7 +12,7 @@ import { toDate } from '@/lib/formatDeadline'
 import InitialsAvatar from '@/components/InitialsAvatar'
 import PostHeroBanner from '@/components/PostHeroBanner'
 import type { Comment, Post, User } from '@/lib/types'
-import { errorMessage, useToast } from '@/components/Toast'
+import { useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { ArrowLeft, Check, Paperclip, Pencil } from 'lucide-react'
 

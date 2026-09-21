@@ -1,6 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createAssignment } from '@/lib/api/assignments'
 import { notifyAssignmentListChanged } from '@/lib/events'
 import { getStoredUser } from '@/lib/session'
@@ -23,7 +23,6 @@ export default function NewAssignmentPage() {
   const [files, setFiles] = useState<UploadResult[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

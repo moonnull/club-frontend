@@ -56,7 +56,6 @@ export default function EditAssignmentPage() {
       .catch(() => setNotFound(true))
   }, [id])
 
-
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
