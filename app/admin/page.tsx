@@ -465,7 +465,13 @@ export default function AdminPage() {
                         {u.name} <span className="text-gray-400 font-normal">· {u.student_id}</span>
                       </p>
                       <p className="text-xs text-gray-400">
-                        {u.email} · {u.generation}기 · {u.part}
+                        {u.email} · {u.generation}기
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        플랜 {u.plan?.name ?? '미선택'} · 과정{' '}
+                        {u.tracks && u.tracks.length > 0
+                          ? u.tracks.map((t) => t.name).join(', ')
+                          : '미선택'}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -620,7 +626,7 @@ export default function AdminPage() {
                       )}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {u.email} · {u.generation}기 · {u.part}
+                      {u.email} · {u.generation}기
                     </p>
                     </div>
                   </div>
