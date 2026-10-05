@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Notification, User } from '../types'
+import type { AssignmentAssignees, AssignmentProgress, Notification, User } from '../types'
 
 export function listUsers() {
   return api.get<User[]>('/api/admin/users')
@@ -58,4 +58,35 @@ export function assignTracksToUsers(userIds: number[], trackIds: number[]) {
     user_ids: userIds,
     track_ids: trackIds,
   })
+}
+
+/** 백엔드 NOTIFICATION_MESSAGE_MAX와 맞춘다. 화면에서 미리 막아 서버까지 갔다 오지 않게 한다. */
+export const NOTIFICATION_MESSAGE_MAX = 500
+
+export interface BulkNotificationResult {
+  sent: number
+  /** 승인 대기 중이라 보내지 않은 수 (로그인할 수 없어 볼 수 없다) */
+  skipped_inactive: number
+}
+
+/**
+ * 선택한 회원들에게 같은 알림을 보낸다.
+ * link는 사이트 안의 경로(/로 시작)만 된다 — 알림을 누르면 그대로 이동하기 때문이다.
+ */
+export function sendBulkNotification(userIds: number[], message: string, link?: string) {
+  return api.post<BulkNotificationResult>('/api/admin/users/bulk/notifications', {
+    user_ids: userIds,
+    message,
+    ...(link ? { link } : {}),
+  })
+}
+
+/** 과제별 제출 현황 (대상자·제출·임시 저장·미제출 수). 마감이 늦은 것부터. */
+export function listAssignmentProgress() {
+  return api.get<AssignmentProgress[]>('/api/admin/assignments/progress')
+}
+
+/** 한 과제의 대상자별 제출 상태. 안 낸 사람이 위로 온다. */
+export function getAssignmentAssignees(assignmentId: number) {
+  return api.get<AssignmentAssignees>(`/api/admin/assignments/${assignmentId}/assignees`)
 }

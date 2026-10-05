@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { Database } from 'lucide-react'
+import { Bell, ClipboardCheck, Database } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -13,7 +13,7 @@ import {
   deleteUser,
   listUsers,
   resetUserPassword,
-  sendNotification,
+  sendBulkNotification,
   updateUserRole,
 } from '@/lib/api/admin'
 import { createBoard, deleteBoard, listBoards, updateBoard } from '@/lib/api/boards'
@@ -24,25 +24,21 @@ import { getStoredUser, saveAuth } from '@/lib/session'
 import { ROLE_LABEL } from '@/lib/role'
 import type { BoardCategory, Plan, Track, User } from '@/lib/types'
 import KeyedListSection from '@/components/admin/KeyedListSection'
+import NotifyDialog from '@/components/admin/NotifyDialog'
+import {
+  EMPTY_QUERY,
+  SORT_LABEL,
+  filterMembers,
+  isFiltered,
+  parseAxis,
+  type MemberQuery,
+  type SortKey,
+} from '@/lib/memberFilter'
 import { errorMessage, useToast } from '@/components/Toast'
 import { useConfirm } from '@/components/ConfirmDialog'
 import TrackMultiSelect from '@/components/TrackMultiSelect'
 import PenaltyStepper from '@/components/PenaltyStepper'
 
-type SortKey = 'name' | 'generation' | 'created'
-type UnassignedFilter = 'ALL' | 'NO_PLAN' | 'NO_TRACK'
-
-const SORT_LABEL: Record<SortKey, string> = {
-  name: '이름순',
-  generation: '기수순',
-  created: '가입순',
-}
-
-const UNASSIGNED_LABEL: Record<UnassignedFilter, string> = {
-  ALL: '전체',
-  NO_PLAN: '플랜 미배정',
-  NO_TRACK: '트랙 미배정',
-}
 
 export default function AdminPage() {
   const toast = useToast()
@@ -58,9 +54,11 @@ export default function AdminPage() {
 
   // 회원 목록 찾기 도구. 가입순으로만 늘어놓으면 배정할 사람을 눈으로 찾아야 해서
   // 인원이 늘수록 시간이 급격히 늘어난다.
-  const [search, setSearch] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-  const [unassigned, setUnassigned] = useState<UnassignedFilter>('ALL')
+  // 플랜과 트랙은 따로 고른다. "비기너인데 트랙 미배정"처럼 두 축을 겹쳐
+  // 걸러야 배정할 사람을 바로 찾을 수 있다.
+  const [query, setQuery] = useState<MemberQuery>(EMPTY_QUERY)
+  // 알림 대화상자. 받는 사람이 정해지면 열린다.
+  const [notifyTargets, setNotifyTargets] = useState<{ id: number; name: string }[] | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
   // TrackMultiSelect는 체크할 때마다 onChange를 쏜다. 일괄 배정에서는 그때마다
@@ -171,15 +169,21 @@ export default function AdminPage() {
     }
   }
 
-  async function sendUserNotification(user: User) {
-    const message = window.prompt(`${user.name} 님에게 보낼 알림 메시지를 입력하세요.`)
-    if (!message || !message.trim()) return
-    try {
-      await sendNotification(user.id, message.trim())
-      toast('알림을 보냈습니다.')
-    } catch (err: unknown) {
-      toast(errorMessage(err), 'error')
-    }
+  function sendUserNotification(user: User) {
+    setNotifyTargets([{ id: user.id, name: user.name }])
+  }
+
+  // 한 명이든 여럿이든 같은 경로로 보낸다. 승인 대기 회원을 건너뛰는 규칙이
+  // 서버 한 곳에만 있게 하기 위해서다.
+  async function sendToTargets(message: string) {
+    if (!notifyTargets) return
+    const r = await sendBulkNotification(notifyTargets.map((t) => t.id), message)
+    toast(
+      r.skipped_inactive > 0
+        ? `${r.sent}명에게 보냈습니다. 승인 대기 ${r.skipped_inactive}명은 제외했습니다.`
+        : `${r.sent}명에게 알림을 보냈습니다.`
+    )
+    setNotifyTargets(null)
   }
 
   // 입력값과 오류는 구역(KeyedListSection)이 들고 있다. 여기는 보내기만 하고,
@@ -318,31 +322,16 @@ export default function AdminPage() {
 
   const pending = users.filter((u) => !u.is_active)
 
-  // 검색 → 미배정 필터 → 정렬 순으로 좁힌다.
-  const approved = users
-    .filter((u) => u.is_active)
-    .filter((u) => {
-      if (!search.trim()) return true
-      const q = search.trim().toLowerCase()
-      return (
-        u.name.toLowerCase().includes(q) ||
-        u.student_id.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
-      )
-    })
-    .filter((u) => {
-      if (unassigned === 'NO_PLAN') return !u.plan
-      if (unassigned === 'NO_TRACK') return (u.tracks ?? []).length === 0
-      return true
-    })
-    .sort((a, b) => {
-      // 한글 이름은 코드포인트 순서가 가나다순과 다르므로 로케일 비교를 쓴다.
-      if (sortKey === 'name') return a.name.localeCompare(b.name, 'ko')
-      if (sortKey === 'generation') {
-        return b.generation - a.generation || a.name.localeCompare(b.name, 'ko')
-      }
-      return b.created_at.localeCompare(a.created_at)
-    })
+  const active = users.filter((u) => u.is_active)
+  const approved = filterMembers(active, query)
+  // 필터 옵션 옆에 인원을 함께 보여준다 — 회원들이 어느 플랜·트랙을 골랐는지
+  // 분포가 한눈에 보이고, 0명인 항목을 골라 빈 화면을 보는 일이 없다.
+  const planCount = (id: number | null) =>
+    active.filter((u) => (id === null ? !u.plan : u.plan?.id === id)).length
+  const trackCount = (id: number | null) =>
+    active.filter((u) =>
+      id === null ? (u.tracks ?? []).length === 0 : (u.tracks ?? []).some((t) => t.id === id)
+    ).length
 
   // 화면에 보이지 않는 사람이 선택에 남아 있으면, 일괄 배정이 의도치 않은
   // 대상까지 건드린다. 보이는 목록으로 항상 교집합을 잡는다.
@@ -415,13 +404,22 @@ export default function AdminPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">회원 관리</h1>
-        <Link
-          href="/admin/data"
-          className="btn-secondary inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
-        >
-          <Database aria-hidden="true" className="size-4" />
-          데이터 정리
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/submissions"
+            className="btn-secondary inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
+          >
+            <ClipboardCheck aria-hidden="true" className="size-4" />
+            과제 제출 현황
+          </Link>
+          <Link
+            href="/admin/data"
+            className="btn-secondary inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
+          >
+            <Database aria-hidden="true" className="size-4" />
+            데이터 정리
+          </Link>
+        </div>
       </div>
 
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -481,9 +479,7 @@ export default function AdminPage() {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">
                 전체 회원 ({approved.length}
-                {approved.length !== users.filter((u) => u.is_active).length &&
-                  ` / ${users.filter((u) => u.is_active).length}`}
-                )
+                {approved.length !== active.length && ` / ${active.length}`})
               </h2>
               <button
                 onClick={toggleSelectAll}
@@ -495,18 +491,46 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* 찾기 도구 — 이름으로 검색하거나 미배정만 걸러내면, 배정할 사람을
-                가입순 목록에서 눈으로 찾을 필요가 없다. */}
+            {/* 찾기 도구 — 플랜과 트랙을 따로 고를 수 있어, "비기너인데 트랙 미배정" 같은
+                조합으로 배정할 사람을 바로 찾는다. */}
             <div className="flex flex-wrap gap-2 mb-3">
               <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={query.search}
+                onChange={(e) => setQuery((q) => ({ ...q, search: e.target.value }))}
                 placeholder="이름 · 학번 · 이메일 검색"
                 className="flex-1 min-w-[180px] field"
               />
               <select
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                value={String(query.plan)}
+                onChange={(e) => setQuery((q) => ({ ...q, plan: parseAxis(e.target.value) }))}
+                aria-label="플랜으로 거르기"
+                className="field"
+              >
+                <option value="ALL">모든 플랜</option>
+                <option value="NONE">플랜 미배정 ({planCount(null)})</option>
+                {plans.map((pl) => (
+                  <option key={pl.id} value={pl.id}>
+                    {pl.name} ({planCount(pl.id)})
+                  </option>
+                ))}
+              </select>
+              <select
+                value={String(query.track)}
+                onChange={(e) => setQuery((q) => ({ ...q, track: parseAxis(e.target.value) }))}
+                aria-label="트랙으로 거르기"
+                className="field"
+              >
+                <option value="ALL">모든 트랙</option>
+                <option value="NONE">트랙 미배정 ({trackCount(null)})</option>
+                {tracks.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({trackCount(t.id)})
+                  </option>
+                ))}
+              </select>
+              <select
+                value={query.sort}
+                onChange={(e) => setQuery((q) => ({ ...q, sort: e.target.value as SortKey }))}
                 aria-label="정렬 기준"
                 className="field"
               >
@@ -516,18 +540,14 @@ export default function AdminPage() {
                   </option>
                 ))}
               </select>
-              <select
-                value={unassigned}
-                onChange={(e) => setUnassigned(e.target.value as UnassignedFilter)}
-                aria-label="배정 상태 필터"
-                className="field"
-              >
-                {(Object.keys(UNASSIGNED_LABEL) as UnassignedFilter[]).map((k) => (
-                  <option key={k} value={k}>
-                    {UNASSIGNED_LABEL[k]}
-                  </option>
-                ))}
-              </select>
+              {isFiltered(query) && (
+                <button
+                  onClick={() => setQuery((q) => ({ ...EMPTY_QUERY, sort: q.sort }))}
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 transition"
+                >
+                  필터 초기화
+                </button>
+              )}
             </div>
 
             {/* 일괄 배정 — 선택한 사람이 있을 때만 나타난다. */}
@@ -568,6 +588,20 @@ export default function AdminPage() {
                   className="btn-secondary text-sm px-3 py-1.5 rounded-lg disabled:opacity-50"
                 >
                   트랙 적용
+                </button>
+                <button
+                  onClick={() =>
+                    setNotifyTargets(
+                      approved
+                        .filter((u) => selectedIds.has(u.id))
+                        .map((u) => ({ id: u.id, name: u.name }))
+                    )
+                  }
+                  disabled={bulkBusy}
+                  className="btn-secondary inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  <Bell aria-hidden="true" className="size-3.5" />
+                  알림 보내기
                 </button>
                 <button
                   onClick={() => setSelectedIds(new Set())}
@@ -729,6 +763,12 @@ export default function AdminPage() {
           />
         </>
       )}
+      <NotifyDialog
+        open={notifyTargets !== null}
+        recipients={notifyTargets ?? []}
+        onClose={() => setNotifyTargets(null)}
+        onSend={sendToTargets}
+      />
     </div>
   )
 }

@@ -206,3 +206,41 @@ export interface Notification {
   created_at: string
   sender: Author | null
 }
+
+/** NONE = 아무것도 안 냄, DRAFT = 임시 저장만, FINAL = 최종 제출 완료 */
+export type SubmissionState = 'NONE' | 'DRAFT' | 'FINAL'
+
+/** 과제 하나의 제출 현황 요약 (관리자 전용, 백엔드 AssignmentProgress). */
+export interface AssignmentProgress {
+  id: number
+  title: string
+  start_at: string
+  end_at: string
+  track: Track | null
+  plan: Plan | null
+  /** 이 과제를 내야 하는 회원 수 (승인된 일반 회원 중 트랙·플랜이 맞는 사람) */
+  assignees: number
+  final: number
+  draft: number
+  /** 최종 제출을 하지 않은 사람 (임시 저장만 한 사람 포함) */
+  missing: number
+}
+
+/** 과제 대상자 한 명의 제출 상태 (백엔드 AssigneeStatus). */
+export interface AssigneeStatus {
+  user_id: number
+  name: string
+  student_id: string
+  generation: number
+  plan_name: string | null
+  track_names: string[]
+  state: SubmissionState
+  submitted_at: string | null
+  updated_at: string | null
+  grade: Grade | null
+}
+
+export interface AssignmentAssignees {
+  assignment: AssignmentProgress
+  members: AssigneeStatus[]
+}
