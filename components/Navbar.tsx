@@ -16,7 +16,18 @@ import { clearAuth, getStoredUser } from '@/lib/session'
 import { realtimeHub, type ConnectionStatus } from '@/lib/ws'
 import { toDate } from '@/lib/formatDeadline'
 import type { Notification, User } from '@/lib/types'
-import { Bell, CalendarDays, ClipboardList, FileText, Layers, Megaphone, ShieldCheck, X } from 'lucide-react'
+import {
+  Bell,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  Layers,
+  LogOut,
+  Megaphone,
+  ShieldCheck,
+  UserRound,
+  X,
+} from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { errorMessage, useToast } from './Toast'
 
@@ -193,7 +204,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="h-14 sticky top-0 z-50 border-b border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-black/80 backdrop-blur-xl flex items-center px-6 gap-4">
+    <nav className="h-14 sticky top-0 z-50 border-b border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-black/80 backdrop-blur-xl flex items-center px-3 sm:px-6 gap-2 sm:gap-4">
       <Link
         href="/"
         className="font-black text-lg tracking-tight brand-text"
@@ -323,23 +334,30 @@ export default function Navbar() {
       )}
 
       {user ? (
-        <div className="flex items-center gap-3">
+        // 폰 폭에서는 메뉴 아이콘만으로도 줄이 꽉 차서, 이름·로그아웃 글자가
+        // 남은 몇 픽셀에 밀려 한 글자씩 세로로 꺾였다. 작은 화면에서는 아이콘으로
+        // 바꾸고, 줄바꿈 자체를 막는다.
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
           <Link
             href="/profile"
+            aria-label={`내 정보 (${user.name})`}
             className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white transition"
           >
-            {user.name}
+            <UserRound aria-hidden="true" className="size-4 sm:hidden" />
+            <span className="hidden sm:inline">{user.name}</span>
           </Link>
           {user.role !== 'MEMBER' && (
-            <span className="text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
+            <span className="hidden sm:inline text-xs badge-neutral px-2 py-0.5 rounded-full font-medium">
               {ROLE_LABEL[user.role]}
             </span>
           )}
           <button
             onClick={logout}
+            aria-label="로그아웃"
             className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
           >
-            로그아웃
+            <LogOut aria-hidden="true" className="size-4 sm:hidden" />
+            <span className="hidden sm:inline">로그아웃</span>
           </button>
         </div>
       ) : (
